@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/DaisySP" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/DaisySP/DaisySP-LGPL" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/libDaisy" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/libDaisy/Drivers/CMSIS-DSP" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/libDaisy/Drivers/CMSIS-Device/ST/STM32H7xx" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/libDaisy/Drivers/CMSIS_5" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/libDaisy/Drivers/STM32H7xx_HAL_Driver" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/libDaisy/Middlewares/ST/STM32_USB_Device_Library" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/libDaisy/tests/googletest" vcs="Git" />
+  </component>
+</project>
