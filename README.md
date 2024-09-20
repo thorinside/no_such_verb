@@ -1,6 +1,6 @@
 # Reverb for Patch.init()
 
-This is a combination of a few DaisySP algorithms and integration with the Patch.init() hardware. Inspired by Benji's MiniVerb and taking it into a slightly darker dimension with some added square noise and filtering.
+This is a combination of a few DaisySP algorithms and integration with the Patch.init() hardware. Inspired by Benjie Jiao's MiniVerb and taking it into a slightly darker dimension with some added square noise and filtering.
 
 Controls:
 
