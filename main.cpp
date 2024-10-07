@@ -32,7 +32,8 @@ bool startup = true;
 bool button_pressed = false;
 bool enable_overdrive = false;
 bool save_settings = false;
-float send_level = 0.0f;
+float dry_level = 0.0f;
+float wet_level = 0.0f;
 float jitter_mix_level = 0.0f;
 float cv_knobs[4];
 
@@ -89,7 +90,8 @@ void AudioCallback(const AudioHandle::InputBuffer in, AudioHandle::OutputBuffer 
             switch (i) {
                 case 0:
                     // Reverb send level
-                    send_level = cv_value;
+                    dry_level = cv_value;
+                    wet_level = 1.0f - dry_level;
                     break;
                 case 1:
                     // Jitter amount
@@ -101,7 +103,7 @@ void AudioCallback(const AudioHandle::InputBuffer in, AudioHandle::OutputBuffer 
 
                     // Set high-pass filter cutoff frequency based on reverb time
                     {
-                        float cutoff_freq = fmap(cv_value, 20.0f, 500.0f, Mapping::LOG);
+                        const float cutoff_freq = fmap(cv_value, 20.0f, 500.0f, Mapping::LOG);
                         hp_filter_l.SetFreq(cutoff_freq);
                         hp_filter_r.SetFreq(cutoff_freq);
                     }
@@ -158,6 +160,16 @@ void AudioCallback(const AudioHandle::InputBuffer in, AudioHandle::OutputBuffer 
                                                         : MIN_OVERDRIVE));
 
     for (size_t i = 0; i < size; i++) {
+        // Dry signal
+        const float dry_l = audio_in_l[i] * dry_level;
+        const float dry_r = audio_in_r[i] * dry_level;
+
+        // Overdrive pre-reverb if toggle is on
+        if (toggle_state) {
+            audio_in_l[i] = overdrive_l.Process(audio_in_l[i]);
+            audio_in_r[i] = overdrive_r.Process(audio_in_r[i]);
+        }
+
         // Process input through high-pass filters
         hp_filter_l.Process(audio_in_l[i]);
         hp_filter_r.Process(audio_in_r[i]);
@@ -167,19 +179,13 @@ void AudioCallback(const AudioHandle::InputBuffer in, AudioHandle::OutputBuffer 
         const float noise_l_out = noise_l.Process(audio_in_l[i]) * NOISE_FACTOR * jitter_mix_level;
         const float noise_r_out = noise_r.Process(audio_in_r[i]) * NOISE_FACTOR * jitter_mix_level;
 
-        // Overdrive pre-reverb if toggle is on
-        if (toggle_state) {
-            audio_in_l[i] = overdrive_l.Process(audio_in_l[i]);
-            audio_in_r[i] = overdrive_r.Process(audio_in_r[i]);
-        }
-
-        reverb.Process((audio_in_l[i] + noise_l_out) * send_level, (audio_in_r[i] + noise_r_out) * send_level,
+        reverb.Process((audio_in_l[i] + noise_l_out) * wet_level, (audio_in_r[i] + noise_r_out) * wet_level,
                        &audio_in_l[i], &audio_in_r[i]);
 
         const float jitter_out = jitter.Process();
 
-        audio_out_l[i] = audio_in_l[i] * (1 - jitter_mix_level + jitter_out * jitter_mix_level);
-        audio_out_r[i] = audio_in_r[i] * (1 - jitter_mix_level + jitter_out * jitter_mix_level);
+        audio_out_l[i] = dry_l + audio_in_l[i] * (1 - jitter_mix_level + jitter_out * jitter_mix_level);
+        audio_out_r[i] = dry_r + audio_in_r[i] * (1 - jitter_mix_level + jitter_out * jitter_mix_level);
 
         // Overdrive post-reverb if toggle is off
         if (!toggle_state) {
@@ -233,8 +239,6 @@ int main() {
 
     hp_filter_l.Init(hw.AudioSampleRate());
     hp_filter_r.Init(hw.AudioSampleRate());
-    hp_filter_l.SetRes(0.7071f);
-    hp_filter_r.SetRes(0.7071f);
 
     hw.SetAudioBlockSize(AUDIO_BLOCK_SIZE);
     hw.StartAudio(AudioCallback);
