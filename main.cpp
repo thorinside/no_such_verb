@@ -206,19 +206,28 @@ void AudioCallback(const AudioHandle::InputBuffer in, AudioHandle::OutputBuffer 
 }
 
 int main() {
+    // Initialize core hardware
     hw.Init();
 
-    // Restore settings
+    // CRITICAL: Wait for bootloader to release QSPI
+    // Duration from Story 1.1 investigation: 3000ms (bootloader has 2.5s grace period)
+    // This prevents QSPI corruption during bootloader SD card loading
+    System::Delay(3000);  // Let bootloader complete
+
+    // Now safe to initialize QSPI and load settings
     storage.Init({SETTINGS_VERSION, false}, 0x2B000);
-    const Settings &settings = storage.GetSettings();
-    // Only load if we have a settings version match
-    if (settings.version == SETTINGS_VERSION) {
-        if (settings.is_overdrive_enabled) {
-            enable_overdrive = true;
-        } else {
-            enable_overdrive = false;
-        }
+
+    Settings loaded_settings = storage.GetSettings();
+    if (loaded_settings.version == SETTINGS_VERSION) {
+        // Settings loaded successfully with matching version
+        enable_overdrive = loaded_settings.is_overdrive_enabled;
         hw.WriteCvOut(CV_OUT_2, enable_overdrive ? 5.0f : 0.0f);
+        // Debug output could go here in development builds
+    } else {
+        // Version mismatch or first boot: use safe defaults
+        enable_overdrive = false;
+        hw.WriteCvOut(CV_OUT_2, 0.0f);
+        // Debug output could go here in development builds
     }
 
 
