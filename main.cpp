@@ -213,10 +213,10 @@ void AudioCallback(const AudioHandle::InputBuffer in, AudioHandle::OutputBuffer 
         audio_in_l[i] = hp_filter_l.High(); // Use high-pass output
         audio_in_r[i] = hp_filter_r.High(); // Use high-pass output
 
-        const float noise_l_out = filterModulationEnabled
+        const float noise_l_out = enable_overdrive
             ? noise_l.Process(audio_in_l[i]) * NOISE_FACTOR * jitter_mix_level
             : 0.0f;
-        const float noise_r_out = filterModulationEnabled
+        const float noise_r_out = enable_overdrive
             ? noise_r.Process(audio_in_r[i]) * NOISE_FACTOR * jitter_mix_level
             : 0.0f;
 
@@ -224,10 +224,11 @@ void AudioCallback(const AudioHandle::InputBuffer in, AudioHandle::OutputBuffer 
                        &audio_in_l[i], &audio_in_r[i]);
 
         const float jitter_out = filterModulationEnabled ? jitter.Process() : 0.0f;
+        const float modulation_intensity = filterModulationEnabled ? jitter_mix_level : 0.0f;
 
         if (filterModulationEnabled) {
-            audio_out_l[i] = dry_l + audio_in_l[i] * (1 - jitter_mix_level + jitter_out * jitter_mix_level);
-            audio_out_r[i] = dry_r + audio_in_r[i] * (1 - jitter_mix_level + jitter_out * jitter_mix_level);
+            audio_out_l[i] = dry_l + audio_in_l[i] * (1 - modulation_intensity + jitter_out * modulation_intensity);
+            audio_out_r[i] = dry_r + audio_in_r[i] * (1 - modulation_intensity + jitter_out * modulation_intensity);
         } else {
             // When modulation disabled, clean signal path without jitter
             audio_out_l[i] = dry_l + audio_in_l[i];
