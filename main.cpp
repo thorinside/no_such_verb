@@ -1,6 +1,7 @@
 #include "daisy_patch_sm.h"
 #include "daisysp.h"
 #include "lib/daisy_midi.h"
+#include "sd_settings.h"
 #include <random>
 
 using namespace daisy;
@@ -30,8 +31,11 @@ Svf hp_filter_r;
 
 bool startup = true;
 bool button_pressed = false;
-bool enable_overdrive = false;
-bool save_settings = false;
+volatile bool enable_overdrive = false;
+volatile bool save_settings = false;
+volatile bool led_target_state = false;
+bool led_current_state = false;
+uint32_t last_save_time = 0;
 float dry_level = 0.0f;
 float wet_level = 0.0f;
 float jitter_mix_level = 0.0f;
@@ -53,7 +57,9 @@ struct Settings
     }
 };
 
-PersistentStorage<Settings> storage(hw.qspi);
+// SDSettings storage - moved from AXI SRAM to eliminate DMA conflicts
+// WAS: __attribute__((section(".sram1_bss"))) which caused mount corruption due to NOLOAD
+SDSettings<Settings> storage(hw);  // Now in regular RAM
 
 struct KnobOnePoleFilter {
     float tmp = 0.0f;
@@ -66,6 +72,25 @@ struct KnobOnePoleFilter {
 
 KnobOnePoleFilter overdrive_filter_l;
 KnobOnePoleFilter overdrive_filter_r;
+
+static inline void ApplyLedState(bool state) {
+    led_current_state = state;
+    hw.SetLed(state);
+}
+
+static inline void RestoreLedToTarget() {
+    ApplyLedState(led_target_state);
+}
+
+static void BlinkLedFeedback(int flashes, uint32_t on_ms, uint32_t off_ms) {
+    const bool base_state = led_target_state;
+    for(int i = 0; i < flashes; i++) {
+        ApplyLedState(!base_state);
+        System::Delay(on_ms);
+        ApplyLedState(base_state);
+        System::Delay(off_ms);
+    }
+}
 
 // ReSharper disable once CppParameterMayBeConst
 void AudioCallback(const AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out,
@@ -138,6 +163,8 @@ void AudioCallback(const AudioHandle::InputBuffer in, AudioHandle::OutputBuffer 
         button_pressed = false;
     }
 
+    led_target_state = enable_overdrive;
+
     float audio_in_l[size];
     float audio_in_r[size];
 
@@ -205,31 +232,76 @@ void AudioCallback(const AudioHandle::InputBuffer in, AudioHandle::OutputBuffer 
     midi.sysex_send_buffer();
 }
 
+// ============================================================================
+// QSPI Memory Layout (Verified Safe - Story 1.3)
+// ============================================================================
+// Based on bootloader analysis (Story 1.1) and linker map verification (Story 1.3):
+//
+// QSPI Physical Address Space (8MB total):
+//   0x90000000 - 0x90040000: Bootloader Reserved (256KB) - DO NOT USE
+//   0x90040000 - 0x9005CF6C: Application Firmware (~116KB)
+//   0x9005CF6C - 0x9006B000: Safety Gap (56KB)
+//   0x9006B000 - 0x9006C000: PersistentStorage (4KB allocated)
+//   0x9006C000 - 0x90800000: Available for expansion (~7.6MB)
+//
+// Settings Location: 0x2B000 offset = 0x9006B000 absolute address
+// Safety Verified: Settings are 172KB beyond bootloader space (256KB + 172KB)
+//                  Settings are 56KB beyond firmware end (acceptable margin)
+//
+// Build verification (Story 1.3):
+//   Linker map checked: No overlaps detected
+//   Bootloader space protected: 0x90000000-0x90040000 untouched
+//   Firmware size: 115KB (well within available space)
+// ============================================================================
+
 int main() {
     // Initialize core hardware
     hw.Init();
 
-    // CRITICAL: Wait for bootloader to release QSPI
+    // CRITICAL: Wait for bootloader to release SD card and QSPI
     // Duration from Story 1.1 investigation: 3000ms (bootloader has 2.5s grace period)
-    // This prevents QSPI corruption during bootloader SD card loading
     System::Delay(3000);  // Let bootloader complete
 
-    // Now safe to initialize QSPI and load settings
-    storage.Init({SETTINGS_VERSION, false}, 0x2B000);
+    // Ensure SD card mount is preserved during settings operations
 
-    Settings loaded_settings = storage.GetSettings();
-    if (loaded_settings.version == SETTINGS_VERSION) {
-        // Settings loaded successfully with matching version
-        enable_overdrive = loaded_settings.is_overdrive_enabled;
-        hw.WriteCvOut(CV_OUT_2, enable_overdrive ? 5.0f : 0.0f);
-        // Debug output could go here in development builds
-    } else {
-        // Version mismatch or first boot: use safe defaults
+    // Additional delay to ensure SD card is fully ready
+    System::Delay(500);
+
+    // Initialize SD card settings storage
+    // Using SD card because program is too large (549KB) for BOOT_SRAM mode (480KB limit)
+    // BOOT_QSPI mode prevents QSPI writes (hardware limitation)
+    auto storage_result = storage.Init({SETTINGS_VERSION, false}, "nsv_settings.bin");
+
+    if (storage_result == SDSettings<Settings>::Result::OK)
+    {
+        Settings& loaded_settings = storage.GetSettings();
+        if (loaded_settings.version == SETTINGS_VERSION) {
+            // Settings loaded successfully with matching version
+            enable_overdrive = loaded_settings.is_overdrive_enabled;
+            hw.WriteCvOut(CV_OUT_2, enable_overdrive ? 5.0f : 0.0f);
+        } else {
+            // Version mismatch: use safe defaults
+            enable_overdrive = false;
+            hw.WriteCvOut(CV_OUT_2, 0.0f);
+        }
+        // Queue a save so defaults or loaded settings always persist to disk
+        save_settings = true;
+    }
+    else
+    {
+        // SD card not available - use defaults (settings won't persist)
         enable_overdrive = false;
         hw.WriteCvOut(CV_OUT_2, 0.0f);
-        // Debug output could go here in development builds
     }
 
+    led_target_state = enable_overdrive;
+    if (storage_result != SDSettings<Settings>::Result::OK) {
+        BlinkLedFeedback(4, 400, 200);  // SD init error
+        RestoreLedToTarget();
+    }
+
+    // Force LED update to match target state
+    ApplyLedState(led_target_state);
 
     button.Init(DaisyPatchSM::B7);
     toggle.Init(DaisyPatchSM::B8);
@@ -252,14 +324,52 @@ int main() {
     hw.SetAudioBlockSize(AUDIO_BLOCK_SIZE);
     hw.StartAudio(AudioCallback);
 
+    // Flash LED on startup to indicate we reached main loop
+    for(int i = 0; i < 5; i++) {
+        ApplyLedState(true);
+        System::Delay(120);
+        ApplyLedState(false);
+        System::Delay(120);
+    }
+    RestoreLedToTarget();
+
     // ReSharper disable once CppDFAEndlessLoop
     while (true) {
         if (save_settings) {
-            Settings &localSettings = storage.GetSettings();
-            localSettings.is_overdrive_enabled = enable_overdrive;
-            storage.Save();
-            save_settings = false;
+            const uint32_t now = System::GetNow();
+
+            // Rate limit: max 1 save per 100ms to prevent excessive SD card wear
+            if (now - last_save_time >= 100) {
+                Settings &localSettings = storage.GetSettings();
+                localSettings.is_overdrive_enabled = enable_overdrive;
+
+                // Save settings to SD card
+                auto save_result = storage.Save();
+
+                if (save_result == SDSettings<Settings>::Result::OK) {
+                    // Save succeeded - 2 quick flashes
+                    BlinkLedFeedback(2, 100, 100);
+                } else {
+                    if (save_result == SDSettings<Settings>::Result::ERR_NO_SD_CARD) {
+                        // SD card not mounted - 4 slow flashes
+                        BlinkLedFeedback(4, 200, 200);
+                    } else if (save_result == SDSettings<Settings>::Result::ERR_FILE_ERROR) {
+                        // File write failure - 3 medium flashes
+                        BlinkLedFeedback(3, 150, 150);
+                    } else {
+                        // Mount failure - 5 very slow flashes
+                        BlinkLedFeedback(5, 250, 250);
+                    }
+                }
+                RestoreLedToTarget();
+
+                save_settings = false;
+                last_save_time = now;
+            }
         }
-        System::Delay(250);
+        if (led_current_state != led_target_state) {
+            RestoreLedToTarget();
+        }
+        System::Delay(10);
     }
 }

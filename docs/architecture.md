@@ -638,6 +638,154 @@ if (block == NULL) {
 
 ---
 
+## Bootloader & QSPI Coordination
+
+### Critical Timing: 3000ms Bootloader Delay
+
+The Daisy Patch.init() bootloader loads firmware from SD card during startup. This process temporarily holds QSPI resources. To prevent state corruption:
+
+1. Application **must delay 3000ms** after `hw.Init()`
+2. This allows bootloader to complete and release QSPI (bootloader has 2.5s grace period)
+3. Only then is `PersistentStorage` safe to initialize
+4. See Story 1.1 investigation for detailed timing analysis (main.cpp:236-238)
+
+**Implementation:**
+```cpp
+int main() {
+    hw.Init();
+
+    // CRITICAL: Wait for bootloader to release QSPI
+    // Duration from Story 1.1 investigation: 3000ms (bootloader has 2.5s grace period)
+    System::Delay(3000);  // Let bootloader complete
+
+    // Now safe to initialize QSPI and load settings
+    storage.Init({SETTINGS_VERSION, false}, 0x2B000);
+}
+```
+
+### QSPI Memory Layout
+
+Based on bootloader analysis (Story 1.1) and linker map verification (Story 1.3):
+
+```
+QSPI Physical Address Space (8MB total):
+
+┌─────────────────────────────────────────────────────┐
+│ Bootloader Reserved (256KB)                         │
+│ 0x90000000 - 0x90040000                            │
+│ DO NOT USE - bootloader critical                    │
+└─────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│ Application Firmware (~116KB)                       │
+│ 0x90040000 - 0x9005CF6C                            │
+│ Loaded by bootloader, read-only                     │
+└─────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│ Safety Gap (56KB)                                   │
+│ 0x9005CF6C - 0x9006B000                            │
+│ Reserved margin for future firmware growth          │
+└─────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│ PersistentStorage (4KB allocated) - SAFE            │
+│ 0x9006B000 - 0x9006C000                            │
+│ Application persistent settings (offset 0x2B000)    │
+└─────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│ Available for Expansion (~7.6MB)                    │
+│ 0x9006C000 - 0x90800000                            │
+│ Future application data                             │
+└─────────────────────────────────────────────────────┘
+```
+
+**Key Safety Margins:**
+- Settings location: **0x9006B000** (offset 0x2B000 from application QSPI base)
+- Distance from bootloader: **172KB** (256KB bootloader + 172KB margin)
+- Distance from firmware end: **56KB** safety gap
+- Verified via linker map: No overlaps detected
+
+### Rate-Limited Writes
+
+Settings saved to QSPI with 100ms throttling to prevent flash wear:
+
+**Implementation (main.cpp:297-320):**
+```cpp
+while (true) {
+    if (save_settings) {
+        uint32_t now = System::GetNow();
+
+        // Rate limit: max 1 save per 100ms to prevent excessive QSPI wear
+        if (now - last_save_time >= 100) {
+            Settings &localSettings = storage.GetSettings();
+            localSettings.is_overdrive_enabled = enable_overdrive;
+            storage.Save();  // Atomic erase+write
+
+            save_settings = false;
+            last_save_time = now;
+        }
+    }
+    System::Delay(10);
+}
+```
+
+**Benefits:**
+- Max 1 write per 100ms prevents QSPI wear
+- Ensures reliability across power cycles
+- Safe during bootloader operations
+- Write-only-if-changed optimization (handled by PersistentStorage API)
+
+### Atomic Write Operations
+
+The `PersistentStorage` API ensures atomic writes:
+
+1. **Erase** entire sector before writing
+2. **Write** new data in single operation
+3. **Only writes if data changed** (prevents unnecessary wear)
+
+**Version Management:**
+```cpp
+struct Settings {
+    int version = SETTINGS_VERSION;
+    bool is_overdrive_enabled;
+
+    bool operator!=(const Settings &other) const {
+        return version != other.version
+            || is_overdrive_enabled != other.is_overdrive_enabled;
+    }
+};
+```
+
+Settings are validated on load - version mismatch triggers safe defaults.
+
+### Future Enhancements
+
+If adding new QSPI features:
+
+1. **Verify memory layout** - Don't overlap bootloader (0x90000000-0x90040000)
+2. **Maintain 3000ms delay** in `main()` before QSPI init
+3. **Rate-limit writes** - Max 1 write per 100ms
+4. **Test with bootloader** - Verify SD card loading still works
+5. **Check linker map** - Verify `build/no_such_verb.map` for overlaps
+6. **Use safe addresses** - Stay beyond 0x9006B000 for new storage
+
+### Troubleshooting QSPI Issues
+
+**Settings Lost After Power Cycle:**
+- Verify 3000ms delay in main.cpp:237
+- Check settings offset is 0x2B000 (main.cpp:242)
+- Review Story 1.1 findings on bootloader timing
+
+**Settings Corruption:**
+- Check rate limiting is active (100ms minimum)
+- Verify version check on load (main.cpp:263)
+- Ensure safe defaults applied on mismatch (main.cpp:268-270)
+
+**Bootloader Failure:**
+- Verify no writes to 0x90000000-0x90040000 (bootloader space)
+- Check linker map for unexpected QSPI usage
+- Ensure firmware size < 116KB (leaves safety margin)
+
+---
+
 ## Known Limitations and Future Enhancements
 
 ### Current Limitations

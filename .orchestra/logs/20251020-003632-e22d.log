@@ -1,0 +1,10 @@
+[2025-10-20T00:36:32.108Z] Starting story 1.3
+[2025-10-20T00:36:32.108Z] Loading story...
+[2025-10-20T00:36:32.120Z] Loaded story: Validate QSPI Memory Layout Safety
+[2025-10-20T00:36:32.120Z] Starting orchestration...
+[2025-10-20T00:36:32.150Z] Error: Story 1.3 not found in READY or IN PROGRESS sections.
+
+Found in READY: none
+Found in IN PROGRESS: none
+
+Please check docs/bmm-workflow-status.md to verify story 1.3 exists.
