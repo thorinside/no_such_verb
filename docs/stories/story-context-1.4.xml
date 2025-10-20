@@ -1,0 +1,107 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.4</storyId>
+    <title>Fix LED State Synchronization</title>
+    <status>Ready for Development</status>
+    <generatedAt>2025-10-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-1.4.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user operating No Such Verb</asA>
+    <iWant>the LED to reflect the recovered button state immediately after boot</iWant>
+    <soThat>I can see the module's state as soon as it powers on</soThat>
+    <tasks>
+      - Load button state from QSPI during main() initialization
+      - Set LED (CV_OUT_2) to match loaded state before AudioCallback starts
+      - Ensure LED = 5V when overdrive enabled, 0V when disabled
+      - Handle QSPI load failure with safe default (LED OFF)
+      - Verify no LED flicker during boot
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    - Button state loaded from QSPI during main() initialization
+    - LED (CV_OUT_2) set to match loaded state before AudioCallback starts
+    - LED = 5V when overdrive enabled, 0V when disabled
+    - No LED flicker during boot
+    - LED state correct even if QSPI load fails (safe default: OFF)
+    - LED continues to sync with button toggles during operation
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Documentation</title>
+        <section>Control Signal Flow</section>
+        <snippet>Button input handling shows CV_OUT_2 used as indicator output.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.2.md</path>
+        <title>Story 1.2 - Bootloader-Safe QSPI Init</title>
+        <section>Implementation</section>
+        <snippet>Settings loading implementation that should set LED state after loading.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>main.cpp</path>
+        <kind>firmware entry</kind>
+        <symbol>main</symbol>
+        <lines>208-256</lines>
+        <reason>Location where LED state should be set after settings load</reason>
+      </artifact>
+      <artifact>
+        <path>main.cpp</path>
+        <kind>button handler</kind>
+        <symbol>AudioCallback button handling</symbol>
+        <lines>124-139</lines>
+        <reason>Shows LED toggle logic during operation that should be replicated at startup</reason>
+      </artifact>
+      <artifact>
+        <path>main.cpp</path>
+        <kind>settings structure</kind>
+        <symbol>Settings</symbol>
+        <lines>44-54</lines>
+        <reason>Contains is_overdrive_enabled field that determines LED state</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <daisy>
+        <library name="libDaisy" path="libDaisy/">WriteCvOut function for LED control</library>
+      </daisy>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - No changes to AudioCallback function
+    - LED control must use existing CV_OUT_2 output
+    - Must handle QSPI failure gracefully with safe default
+    - No additional hardware required
+    - Implementation must be simple and straightforward
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>DaisyPatchSM::WriteCvOut</name>
+      <kind>function</kind>
+      <signature>void WriteCvOut(CvChannel channel, float voltage)</signature>
+      <path>libDaisy/src/daisy_patch_sm.h</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Hardware testing required. Visual LED verification. Multiple power cycle testing with different saved states.</standards>
+    <locations>Hardware testing on Daisy Patch.init() device</locations>
+    <ideas>
+      <idea ac="Boot with overdrive ON">Test 1: Save overdrive ON state, power cycle, verify LED immediately ON at boot</idea>
+      <idea ac="Boot with overdrive OFF">Test 2: Save overdrive OFF state, power cycle, verify LED immediately OFF at boot</idea>
+      <idea ac="QSPI failure">Test 3: Corrupt QSPI settings, power on, verify LED OFF (safe default) with no crash</idea>
+      <idea ac="Toggle during operation">Test 4: Press button 20 times, verify LED toggles immediately on every press</idea>
+      <idea ac="No flicker">Test 5: Observe LED during boot sequence, verify no flicker or intermediate states</idea>
+    </ideas>
+  </tests>
+</story-context>

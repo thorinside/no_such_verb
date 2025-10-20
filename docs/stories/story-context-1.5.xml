@@ -1,0 +1,122 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.5</storyId>
+    <title>Implement Bootloader-Safe QSPI Write</title>
+    <status>Ready for Development</status>
+    <generatedAt>2025-10-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-1.5.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a module operator</asA>
+    <iWant>settings saved safely to QSPI without corrupting data</iWant>
+    <soThat>power failures during save don't break the module</soThat>
+    <tasks>
+      - Implement QSPI write with error detection and logging
+      - Add rate-limiting to prevent excessive QSPI wear (max 1 write per 100ms)
+      - Ensure writes only occur after bootloader completion
+      - Handle write failures gracefully without crashing
+      - Update settings struct before triggering save
+      - Test write reliability across multiple power cycles
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    - QSPI write failures detected and logged (via MIDI debug)
+    - Writes only occur after bootloader completion (already ensured by Story 1.2)
+    - Invalid settings detected on load (checksum or version mismatch)
+    - Corrupted settings trigger recovery to safe defaults
+    - Write operations are atomic (no partial writes)
+    - Rate-limiting prevents excessive QSPI wear (max 1x/100ms)
+    - No interference with bootloader during save operations
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Documentation</title>
+        <section>Audio Callback</section>
+        <snippet>AudioCallback is where button handling and settings save logic will be implemented.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.2.md</path>
+        <title>Story 1.2 - QSPI Initialization</title>
+        <section>Settings Loading</section>
+        <snippet>Shows settings reading implementation that should be complemented with safe writing.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>main.cpp</path>
+        <kind>audio callback</kind>
+        <symbol>AudioCallback</symbol>
+        <lines>71-206</lines>
+        <reason>Location where button press triggers settings save</reason>
+      </artifact>
+      <artifact>
+        <path>main.cpp</path>
+        <kind>button handler</kind>
+        <symbol>button press detection</symbol>
+        <lines>124-139</lines>
+        <reason>Button handler where save flag should be set after state change</reason>
+      </artifact>
+      <artifact>
+        <path>main.cpp</path>
+        <kind>main loop</kind>
+        <symbol>main while loop</symbol>
+        <lines>247-255</lines>
+        <reason>Existing save logic that needs rate-limiting enhancement</reason>
+      </artifact>
+      <artifact>
+        <path>main.cpp</path>
+        <kind>persistent storage</kind>
+        <symbol>PersistentStorage</symbol>
+        <lines>56</lines>
+        <reason>Storage object used for Save() operations</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <daisy>
+        <library name="libDaisy" path="libDaisy/">System::GetNow for rate-limiting timestamps</library>
+      </daisy>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Must implement rate-limiting (max 1 write per 100ms)
+    - Write failures must be logged but not crash the application
+    - No changes to audio processing performance
+    - Settings struct must be updated before save
+    - Must maintain bootloader compatibility from Story 1.2
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>PersistentStorage::Save</name>
+      <kind>function</kind>
+      <signature>bool Save()</signature>
+      <path>libDaisy/src/per/qspi.h</path>
+    </interface>
+    <interface>
+      <name>System::GetNow</name>
+      <kind>function</kind>
+      <signature>uint32_t GetNow()</signature>
+      <path>libDaisy/src/sys/system.h</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Hardware testing required. Rate-limiting verification. Power cycle testing during write operations. Write failure handling verification.</standards>
+    <locations>Hardware testing on Daisy Patch.init() device</locations>
+    <ideas>
+      <idea ac="Successful save">Test 1: Toggle overdrive, verify settings saved within 100ms with no error messages</idea>
+      <idea ac="Rate limiting">Test 2: Press button 50 times rapidly, verify QSPI writes throttled to ~1 per 100ms</idea>
+      <idea ac="Write failure">Test 3: Simulate QSPI write failure, verify error logged and module continues operating</idea>
+      <idea ac="Persist across cycle">Test 4: Toggle overdrive 5 times, power off, power on, verify final state restored</idea>
+      <idea ac="Rapid power cycles">Test 5: Power on/off 10 times rapidly, verify no corruption and bootloader still works</idea>
+    </ideas>
+  </tests>
+</story-context>

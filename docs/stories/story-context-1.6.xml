@@ -1,0 +1,109 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.6</storyId>
+    <title>Document Bootloader/QSPI Coordination</title>
+    <status>Ready for Development</status>
+    <generatedAt>2025-10-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-1.6.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a future developer maintaining No Such Verb</asA>
+    <iWant>clear documentation of QSPI usage relative to bootloader</iWant>
+    <soThat>future enhancements don't break state persistence</soThat>
+    <tasks>
+      - Update docs/architecture.md with bootloader/QSPI coordination section
+      - Create docs/qspi-memory-layout.md with memory map diagram
+      - Update docs/development-guide.md with troubleshooting section
+      - Update README.md with state persistence information
+      - Add inline code comments explaining bootloader timing
+      - Document rate-limiting strategy and memory safety rules
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    - docs/architecture.md updated with bootloader/QSPI section
+    - QSPI memory layout diagram in documentation
+    - Code comments explain bootloader coordination timing
+    - README includes QSPI state persistence information
+    - Troubleshooting section addresses common issues
+    - Clear explanation of why 100ms delay is necessary (from Story 1.1)
+    - Safe memory address ranges documented
+    - Rate-limiting strategy explained
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Documentation</title>
+        <section>All sections</section>
+        <snippet>Main architecture document to be updated with bootloader/QSPI coordination section.</snippet>
+      </doc>
+      <doc>
+        <path>docs/development-guide.md</path>
+        <title>Development Guide</title>
+        <section>Troubleshooting</section>
+        <snippet>Development guide to be updated with QSPI troubleshooting procedures.</snippet>
+      </doc>
+      <doc>
+        <path>README.md</path>
+        <title>Project README</title>
+        <section>Overview</section>
+        <snippet>README to be updated with state persistence feature description.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.1.md</path>
+        <title>Story 1.1 Investigation Findings</title>
+        <section>All deliverables</section>
+        <snippet>Investigation findings to be referenced in documentation for bootloader timing and memory layout.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>main.cpp</path>
+        <kind>firmware entry</kind>
+        <symbol>main</symbol>
+        <lines>208-256</lines>
+        <reason>Location to add comprehensive comments about bootloader/QSPI coordination</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <documentation>
+        <tool name="Markdown" version="N/A">Documentation format</tool>
+      </documentation>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Documentation only - no code changes except comments
+    - Must accurately reflect Story 1.1 findings
+    - Memory addresses must match actual implementation
+    - Timing values must match actual delays used
+    - Troubleshooting section must cover common failure modes
+    - Documentation must be clear for future maintainers
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Documentation Structure</name>
+      <kind>markdown files</kind>
+      <signature>docs/*.md files with clear sections and diagrams</signature>
+      <path>docs/</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Documentation quality review. Accuracy verification against implementation. Completeness check for all required sections.</standards>
+    <locations>docs/ directory</locations>
+    <ideas>
+      <idea ac="Documentation complete">Test 1: Verify all mentioned files updated with required sections</idea>
+      <idea ac="Documentation accurate">Test 2: Verify all memory addresses match Story 1.1 findings and timing values match implementation</idea>
+      <idea ac="Future-proof">Test 3: Review documentation with fresh eyes to ensure future developers can understand QSPI usage</idea>
+      <idea ac="Troubleshooting">Test 4: Verify troubleshooting section covers common failure scenarios identified in Stories 1.1-1.5</idea>
+      <idea ac="Consistency">Test 5: Check for contradictions or ambiguities across all documentation files</idea>
+    </ideas>
+  </tests>
+</story-context>

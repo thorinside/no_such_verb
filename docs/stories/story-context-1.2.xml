@@ -1,0 +1,130 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.2</storyId>
+    <title>Implement Bootloader-Safe QSPI Initialization</title>
+    <status>Ready for Development</status>
+    <generatedAt>2025-10-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-1.2.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a firmware developer</asA>
+    <iWant>to initialize QSPI only after the bootloader completes</iWant>
+    <soThat>settings read/write operations don't conflict with bootloader SD card loading</soThat>
+    <tasks>
+      - Implement bootloader completion delay in main()
+      - Initialize PersistentStorage after delay
+      - Add settings loading with version validation
+      - Set LED state to match loaded settings
+      - Add serial debug output for verification
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    - QSPI initialization delayed until bootloader completes (use Story 1.1 recommended delay)
+    - storage.Init() called only after delay
+    - Settings successfully read from QSPI without corruption
+    - No changes to existing audio processing (AudioCallback unchanged)
+    - Firmware still boots normally and loads firmware from SD
+    - Code compiles without errors or warnings
+    - Follows existing code style
+    - Binary size remains ≤ 120KB
+    - SRAM usage &lt; 90%
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Documentation</title>
+        <section>Component Overview</section>
+        <snippet>Main initialization sequence starts with hw.Init() and should delay before QSPI access based on bootloader completion timing.</snippet>
+      </doc>
+      <doc>
+        <path>docs/development-guide.md</path>
+        <title>Development Guide</title>
+        <section>Building and Testing</section>
+        <snippet>Build process and serial monitoring procedures for debugging initialization sequences.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.1.md</path>
+        <title>Story 1.1 - Bootloader Investigation</title>
+        <section>Findings</section>
+        <snippet>Prerequisite investigation that provides recommended QSPI delay value and memory layout information.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>main.cpp</path>
+        <kind>firmware entry</kind>
+        <symbol>main</symbol>
+        <lines>208-256</lines>
+        <reason>Initialization sequence to be modified with bootloader delay and settings loading</reason>
+      </artifact>
+      <artifact>
+        <path>main.cpp</path>
+        <kind>persistent storage</kind>
+        <symbol>PersistentStorage&lt;Settings&gt;</symbol>
+        <lines>56, 212</lines>
+        <reason>QSPI storage initialization that must be called after delay</reason>
+      </artifact>
+      <artifact>
+        <path>main.cpp</path>
+        <kind>settings structure</kind>
+        <symbol>Settings</symbol>
+        <lines>44-54</lines>
+        <reason>Settings structure with version field for validation</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <daisy>
+        <library name="libDaisy" path="libDaisy/">System::Delay function for bootloader timing</library>
+        <library name="DaisySP" path="DaisySP/">Audio DSP library (no changes needed)</library>
+      </daisy>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Must use delay value from Story 1.1 findings
+    - No changes to AudioCallback function
+    - Audio processing must remain identical
+    - Bootloader compatibility must be maintained
+    - Binary size must stay under 120KB
+    - Must follow existing code style (lowercase_with_underscores)
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>System::Delay</name>
+      <kind>function</kind>
+      <signature>void System::Delay(uint32_t milliseconds)</signature>
+      <path>libDaisy/src/sys/system.h</path>
+    </interface>
+    <interface>
+      <name>PersistentStorage::Init</name>
+      <kind>function</kind>
+      <signature>void Init(Settings defaults, uint32_t address_offset)</signature>
+      <path>libDaisy/src/per/qspi.h</path>
+    </interface>
+    <interface>
+      <name>PersistentStorage::GetSettings</name>
+      <kind>function</kind>
+      <signature>Settings&amp; GetSettings()</signature>
+      <path>libDaisy/src/per/qspi.h</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Local hardware testing required. Serial debug output verification. Multiple power cycle testing to ensure reliability.</standards>
+    <locations>Hardware testing on Daisy Patch.init() device</locations>
+    <ideas>
+      <idea ac="QSPI delay">Test 1: Verify QSPI initialization happens after bootloader with serial debug output showing proper timing sequence</idea>
+      <idea ac="Settings load">Test 2: Save overdrive state, power cycle, verify settings loaded correctly without corruption</idea>
+      <idea ac="Bootloader compatibility">Test 3: Verify bootloader still loads firmware from SD card successfully</idea>
+      <idea ac="Audio unchanged">Test 4: Verify audio processing continues to work identically with no glitches</idea>
+      <idea ac="Multiple cycles">Test 5: Power cycle 5+ times and verify consistent behavior</idea>
+    </ideas>
+  </tests>
+</story-context>

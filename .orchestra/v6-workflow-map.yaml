@@ -1,0 +1,379 @@
+# BMAD v6 Workflow Map
+# Complete workflow orchestration map extracted from BMAD-METHOD v6-alpha branch
+# Source: https://github.com/anthropics/BMAD-METHOD (v6-alpha branch)
+# Generated: 2025-01-19
+
+version: v6
+
+# Claude Code slash command loading patterns for v6
+# Pattern: /bmad:bmm:agents:{agent-id} *{trigger} {args}
+# Agents can be loaded with commands in one invocation
+claude_code_loading:
+  agents:
+    - command: /bmad:bmm:agents:analyst
+      invocation_pattern: "/bmad:bmm:agents:analyst *{trigger} {args}"
+    - command: /bmad:bmm:agents:architect
+      invocation_pattern: "/bmad:bmm:agents:architect *{trigger} {args}"
+    - command: /bmad:bmm:agents:dev
+      invocation_pattern: "/bmad:bmm:agents:dev *{trigger} {args}"
+    - command: /bmad:bmm:agents:pm
+      invocation_pattern: "/bmad:bmm:agents:pm *{trigger} {args}"
+    - command: /bmad:bmm:agents:sm
+      invocation_pattern: "/bmad:bmm:agents:sm *{trigger} {args}"
+    - command: /bmad:bmm:agents:tea
+      invocation_pattern: "/bmad:bmm:agents:tea *{trigger} {args}"
+    - command: /bmad:bmm:agents:ux-expert
+      invocation_pattern: "/bmad:bmm:agents:ux-expert *{trigger} {args}"
+
+  workflows:
+    - /bmad:bmm:workflows:dev-story
+    - /bmad:bmm:workflows:review-story
+    - /bmad:bmm:workflows:story-approved
+    - /bmad:bmm:workflows:create-story
+    - /bmad:bmm:workflows:story-ready
+
+  invocation_examples:
+    - "/bmad:bmm:agents:dev *develop 3.1"
+    - "/bmad:bmm:agents:dev *review 3.1"
+    - "/bmad:bmm:agents:dev *story-approved 3.1"
+    - "/bmad:bmm:agents:sm *create-story"
+    - "/bmad:bmm:agents:sm *story-ready 3.1"
+
+  subagents:
+    - bmm-requirements-analyst
+    - bmm-user-journey-mapper
+    - bmm-epic-optimizer
+    - bmm-technical-decisions-curator
+    - bmm-data-analyst
+    - bmm-trend-spotter
+    - bmm-user-researcher
+    - bmm-market-researcher
+    - bmm-technical-evaluator
+    - bmm-document-reviewer
+    - bmm-codebase-analyzer
+    - bmm-dependency-mapper
+    - bmm-pattern-detector
+    - bmm-tech-debt-auditor
+    - bmm-api-documenter
+    - bmm-test-coverage-analyzer
+
+# All agents defined in BMAD v6
+agents:
+  analyst:
+    name: Mary
+    title: Business Analyst
+    icon: 📊
+    persona_file: bmad/bmm/agents/analyst.md
+    claude_code_command: /bmad:bmm:agents:analyst
+    commands:
+      - trigger: workflow-status
+        description: Check workflow status and get recommendations (START HERE!)
+      - trigger: brainstorm-project
+        description: Guide me through Brainstorming
+      - trigger: product-brief
+        description: Produce Project Brief
+      - trigger: document-project
+        description: Generate comprehensive documentation of an existing Project
+      - trigger: research
+        description: Guide me through Research
+
+  architect:
+    name: Winston
+    title: Architect
+    icon: 🏗️
+    persona_file: bmad/bmm/agents/architect.md
+    claude_code_command: /bmad:bmm:agents:architect
+    commands:
+      - trigger: workflow-status
+        description: Check workflow status and get recommendations
+      - trigger: correct-course
+        description: Course Correction Analysis
+      - trigger: solution-architecture
+        description: Produce a Scale Adaptive Architecture
+      - trigger: validate-architecture
+        description: Validate latest Tech Spec against checklist
+      - trigger: tech-spec
+        description: Use the PRD and Architecture to create a Tech-Spec for a specific epic
+      - trigger: validate-tech-spec
+        description: Validate latest Tech Spec against checklist
+
+  dev:
+    name: Amelia
+    title: Developer Agent
+    icon: 💻
+    persona_file: bmad/bmm/agents/dev.md
+    claude_code_command: /bmad:bmm:agents:dev
+    commands:
+      - trigger: workflow-status
+        description: Check workflow status and get recommendations
+      - trigger: develop
+        description: Execute Dev Story workflow, implementing tasks and tests
+      - trigger: story-approved
+        description: Mark story done after DoD complete
+      - trigger: review
+        description: Perform thorough review on story flagged Ready for Review
+
+  pm:
+    name: John
+    title: Product Manager
+    icon: 📋
+    persona_file: bmad/bmm/agents/pm.md
+    claude_code_command: /bmad:bmm:agents:pm
+    commands:
+      - trigger: workflow-status
+        description: Check workflow status and get recommendations (START HERE!)
+      - trigger: plan-project
+        description: Analyze Project Scope and Create PRD or Smaller Tech Spec
+      - trigger: correct-course
+        description: Course Correction Analysis
+      - trigger: validate
+        description: Validate any document against its workflow checklist
+
+  sm:
+    name: Bob
+    title: Scrum Master
+    icon: 🏃
+    persona_file: bmad/bmm/agents/sm.md
+    claude_code_command: /bmad:bmm:agents:sm
+    commands:
+      - trigger: workflow-status
+        description: Check workflow status and get recommendations
+      - trigger: assess-project-ready
+        description: Validate solutioning complete, ready for Phase 4
+      - trigger: create-story
+        description: Create a Draft Story with Context
+      - trigger: story-ready
+        description: Mark drafted story ready for development
+      - trigger: story-context
+        description: Assemble dynamic Story Context (XML) from latest docs and code
+      - trigger: validate-story-context
+        description: Validate latest Story Context XML against checklist
+      - trigger: retrospective
+        description: Facilitate team retrospective after epic/sprint
+      - trigger: correct-course
+        description: Execute correct-course task
+
+  tea:
+    name: Murat
+    title: Master Test Architect
+    icon: 🧪
+    persona_file: bmad/bmm/agents/tea.md
+    claude_code_command: /bmad:bmm:agents:tea
+    commands:
+      - trigger: workflow-status
+        description: Check workflow status and get recommendations
+      - trigger: framework
+        description: Initialize production-ready test framework architecture
+      - trigger: atdd
+        description: Generate E2E tests first, before starting implementation
+      - trigger: automate
+        description: Generate comprehensive test automation
+      - trigger: test-design
+        description: Create comprehensive test scenarios
+      - trigger: trace
+        description: Map requirements to tests Given-When-Then BDD format
+      - trigger: nfr-assess
+        description: Validate non-functional requirements
+      - trigger: ci
+        description: Scaffold CI/CD quality pipeline
+      - trigger: gate
+        description: Write/update quality gate decision assessment
+
+  ux:
+    name: Sally
+    title: UX Expert
+    icon: 🎨
+    persona_file: bmad/bmm/agents/ux-expert.md
+    claude_code_command: /bmad:bmm:agents:ux-expert
+    commands:
+      - trigger: workflow-status
+        description: Check workflow status and get recommendations
+      - trigger: plan-project
+        description: UX Workflows, Website Planning, and UI AI Prompt Generation
+
+# State machine rules for story workflow
+# Maps story status to next agent/command
+state_machine:
+  # Story creation phase
+  "Draft":
+    agent: sm
+    command: story-ready
+    description: Story needs SM approval before development
+
+  # Development phase
+  "Approved":
+    agent: dev
+    command: develop
+    description: Story approved by PO/SM, ready for DEV implementation
+
+  "Ready for Development":
+    agent: dev
+    command: develop
+    description: Story approved, ready for implementation
+
+  "In Progress":
+    agent: dev
+    command: develop
+    description: Story currently being implemented
+
+  # Review phase
+  "Ready for Review":
+    agent: dev
+    command: review
+    description: Implementation complete, perform self-review
+
+  # Approval phase
+  "Review Passed":
+    agent: dev
+    command: story-approved
+    description: Review approved, mark story done
+
+  "Ready for Done":
+    agent: dev
+    command: story-approved
+    description: Final validation complete, mark done
+
+  # Terminal states
+  "Done":
+    agent: null
+    command: null
+    description: Story complete, move to next
+
+  "Blocked":
+    agent: null
+    command: null
+    description: Requires user intervention
+
+# Expected state transitions after running workflows
+expected_transitions:
+  develop:
+    input_status: ["Approved", "Ready for Development", "In Progress"]
+    output_status: ["Ready for Review", "In Progress"]
+    notes: "May complete in one iteration or require multiple passes"
+
+  review:
+    input_status: ["Ready for Review"]
+    output_status: ["Review Passed", "In Progress"]
+    notes: "Review Passed if approved, In Progress if changes requested"
+
+  story-approved:
+    input_status: ["Review Passed", "Ready for Done"]
+    output_status: ["Done"]
+    notes: "Final step marking story complete and updating workflow status"
+
+  story-ready:
+    input_status: ["Draft"]
+    output_status: ["Approved", "Ready for Development"]
+    notes: "SM or PO marks draft ready for DEV (Approved or Ready for Development)"
+
+  create-story:
+    input_status: ["N/A"]
+    output_status: ["Draft"]
+    notes: "SM creates new draft story with context"
+
+# Orchestration rules for LLM decision making
+orchestration_rules:
+  - 'If story status is "Done", return action: "complete"'
+  - 'If story status is "Blocked", return action: "halt" with reasoning'
+  - 'If agent output says story already complete/reviewed, verify status before routing'
+  - 'If agent output explicitly suggests next command (e.g. "Run *story-approved"), strongly consider it'
+  - 'Never run same workflow twice if agent confirms work already complete'
+  - 'Use state_machine as default routing but allow intelligent overrides with clear reasoning'
+  - 'If iteration exceeds max_iterations, return action: "halt" to prevent infinite loops'
+  - 'Check for HALT indicators in agent output (blocking issues, missing dependencies)'
+
+# Agent output patterns to detect
+agent_patterns:
+  completion_indicators:
+    - "Story [\\d.]+ complete"
+    - "Status: Done"
+    - "All acceptance criteria met"
+    - "Implementation complete"
+    - "Story [\\d.]+ Implementation Complete"
+
+  suggestions:
+    - "Run `\\*(\\w+) ([\\d.]+)`"
+    - "Command to run: `\\*(\\w+)`"
+    - "Next: \\*(\\w+)"
+    - "Would you like me to run `\\*(\\w+)`"
+    - "run `\\*(\\w+-?\\w*) ([\\d.]+)`"
+
+  halt_indicators:
+    - "HALT"
+    - "cannot proceed"
+    - "blocked"
+    - "requires user input"
+    - "Cannot Be Approved"
+    - "missing dependencies"
+
+  already_complete:
+    - "already complete"
+    - "already reviewed"
+    - "already approved"
+    - "Status: Done"
+    - "Status: Review Passed"
+
+# BMAD v6 workflow phases (for context)
+workflow_phases:
+  - number: 1
+    name: Analysis
+    primary_agents: [analyst, pm]
+    outputs: [product-brief, research]
+
+  - number: 2
+    name: Planning
+    primary_agents: [pm, architect]
+    outputs: [prd, architecture]
+
+  - number: 3
+    name: Solutioning
+    primary_agents: [architect]
+    outputs: [solution-architecture, tech-spec]
+
+  - number: 4
+    name: Implementation
+    primary_agents: [sm, dev, tea]
+    outputs: [stories, tests, code]
+
+  - number: 5
+    name: Deployment
+    primary_agents: [dev, tea]
+    outputs: [deployed-system]
+
+# Extension notes
+notes: |
+  This workflow map is generated from BMAD v6 agent definitions.
+
+  To add a new agent:
+  1. Create agent.yaml file in bmad/bmm/agents/
+  2. Regenerate this map with generator script
+  3. No orchestrator code changes needed
+
+  To modify workflow rules:
+  1. Update state_machine for new status values
+  2. Update expected_transitions for new commands
+  3. Test with LLM orchestrator
+  4. Refine orchestration_rules if needed
+
+  Game-specific agents (game-architect, game-designer, game-dev) are available
+  but not included in state_machine as they follow project-specific workflows.
+
+  Claude Code Integration:
+  - v6 uses namespaced slash commands: /bmad:bmm:agents:{agent-id}
+  - Workflows can also be directly invoked: /bmad:bmm:workflows:{workflow-name}
+
+  Command invocation patterns:
+  - Two-step: "/bmad:bmm:agents:dev" (load agent) then "*develop 3.1" (execute)
+  - One-step: "/bmad:bmm:agents:dev *develop 3.1" (load AND execute immediately)
+
+  Orchestra should use one-step invocation:
+  - Pattern: "/bmad:bmm:agents:{agent} *{trigger} {args}"
+  - Example: "/bmad:bmm:agents:dev *develop 3.1"
+  - Example: "/bmad:bmm:agents:sm *create-story"
+  - Example: "/bmad:bmm:agents:dev *story-approved 3.1"
+
+  Subagents:
+  - v6 includes specialized subagents (bmm-requirements-analyst, bmm-data-analyst, etc.)
+  - These are Claude Code Task agents that can be called from within main agents
+  - Used for specialized analysis during workflow execution
+  - Installed to .claude/agents/ during BMAD installation

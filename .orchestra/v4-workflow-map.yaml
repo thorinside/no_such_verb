@@ -1,0 +1,467 @@
+# BMAD v4 Workflow Map
+# Complete workflow orchestration map extracted from BMAD-METHOD main branch
+# Source: https://github.com/anthropics/BMAD-METHOD (main branch)
+# Generated: 2025-01-19
+
+version: v4
+
+# Claude Code slash command loading patterns for v4
+# Pattern: /BMad:agents:{agent-id} (note capital B)
+# Also has short aliases: /{agent-id}
+# Can pass menu commands after slash: /dev *develop-story 3.1
+claude_code_loading:
+  agents:
+    - command: /BMad:agents:analyst
+      alias: /analyst
+      invocation_pattern: "/analyst *{trigger} {args}"
+    - command: /BMad:agents:architect
+      alias: /architect
+      invocation_pattern: "/architect *{trigger} {args}"
+    - command: /BMad:agents:bmad-master
+      alias: /bmad-master
+      invocation_pattern: "/bmad-master *{trigger} {args}"
+    - command: /BMad:agents:bmad-orchestrator
+      alias: /bmad-orchestrator
+      invocation_pattern: "/bmad-orchestrator *{trigger} {args}"
+    - command: /BMad:agents:dev
+      alias: /dev
+      invocation_pattern: "/dev *{trigger} {args}"
+    - command: /BMad:agents:pm
+      alias: /pm
+      invocation_pattern: "/pm *{trigger} {args}"
+    - command: /BMad:agents:qa
+      alias: /qa
+      invocation_pattern: "/qa *{trigger} {args}"
+    - command: /BMad:agents:po
+      alias: /po
+      invocation_pattern: "/po *{trigger} {args}"
+    - command: /BMad:agents:sm
+      alias: /sm
+      invocation_pattern: "/sm *{trigger} {args}"
+    - command: /BMad:agents:ux-expert
+      alias: /ux-expert
+      invocation_pattern: "/ux-expert *{trigger} {args}"
+
+  tasks:
+    - /BMad:tasks:develop-story
+    - /BMad:tasks:review-story
+    - /BMad:tasks:qa-gate
+    - /BMad:tasks:apply-qa-fixes
+    - /BMad:tasks:create-next-story
+    - /BMad:tasks:validate-next-story
+
+  invocation_examples:
+    - "/dev *develop-story 3.1"
+    - "/qa *review 3.1"
+    - "/sm *draft"
+    - "/po *validate-story-draft story-3.1.md"
+
+# All agents defined in BMAD v4
+agents:
+  analyst:
+    name: Mary
+    title: Business Analyst
+    icon: 📊
+    persona_file: .bmad-core/agents/analyst.md
+    claude_code_command: /BMad:agents:analyst
+    claude_code_alias: /analyst
+    commands:
+      - trigger: help
+        description: Show numbered list of commands
+      - trigger: brainstorm
+        description: Facilitate structured brainstorming session
+      - trigger: create-competitor-analysis
+        description: Create competitive analysis document
+      - trigger: create-project-brief
+        description: Create project brief document
+      - trigger: perform-market-research
+        description: Create market research document
+
+  architect:
+    name: Winston
+    title: Architect
+    icon: 🏗️
+    persona_file: .bmad-core/agents/architect.md
+    claude_code_command: /BMad:agents:architect
+    claude_code_alias: /architect
+    commands:
+      - trigger: help
+        description: Show numbered list of commands
+      - trigger: solution-architecture
+        description: Design system architecture
+      - trigger: tech-spec
+        description: Create technical specification for epic
+      - trigger: validate-architecture
+        description: Validate architecture against checklist
+
+  dev:
+    name: James
+    title: Full Stack Developer
+    icon: 💻
+    persona_file: .bmad-core/agents/dev.md
+    claude_code_command: /BMad:agents:dev
+    claude_code_alias: /dev
+    commands:
+      - trigger: help
+        description: Show numbered list of commands
+      - trigger: develop-story
+        description: Implement story by executing tasks sequentially with comprehensive testing
+      - trigger: explain
+        description: Teach me what and why you did in detail so I can learn
+      - trigger: review-qa
+        description: Apply QA fixes and address review feedback
+      - trigger: run-tests
+        description: Execute linting and tests
+
+  pm:
+    name: John
+    title: Product Manager
+    icon: 📋
+    persona_file: .bmad-core/agents/pm.md
+    claude_code_command: /BMad:agents:pm
+    claude_code_alias: /pm
+    commands:
+      - trigger: help
+        description: Show numbered list of commands
+      - trigger: plan-project
+        description: Analyze Project Scope and Create PRD
+      - trigger: correct-course
+        description: Course Correction Analysis
+      - trigger: validate
+        description: Validate any document against workflow checklist
+
+  qa:
+    name: Quinn
+    title: Test Architect & Quality Advisor
+    icon: 🧪
+    persona_file: .bmad-core/agents/qa.md
+    claude_code_command: /BMad:agents:qa
+    claude_code_alias: /qa
+    commands:
+      - trigger: help
+        description: Show numbered list of commands
+      - trigger: gate
+        description: Execute qa-gate task to write/update quality gate decision
+      - trigger: nfr-assess
+        description: Execute nfr-assess task to validate non-functional requirements
+      - trigger: review
+        description: Adaptive, risk-aware comprehensive review producing QA Results and gate file
+      - trigger: risk-profile
+        description: Execute risk-profile task to generate risk assessment matrix
+      - trigger: test-design
+        description: Execute test-design task to create comprehensive test scenarios
+      - trigger: trace
+        description: Execute trace-requirements task to map requirements to tests using Given-When-Then
+
+  po:
+    name: Sarah
+    title: Product Owner
+    icon: 📝
+    persona_file: .bmad-core/agents/po.md
+    claude_code_command: /BMad:agents:po
+    claude_code_alias: /po
+    commands:
+      - trigger: help
+        description: Show numbered list of commands
+      - trigger: correct-course
+        description: Execute the correct-course task
+      - trigger: create-epic
+        description: Create epic for brownfield projects
+      - trigger: create-story
+        description: Create user story from requirements
+      - trigger: execute-checklist-po
+        description: Run task execute-checklist with po-master-checklist
+      - trigger: shard-doc
+        description: Run the task shard-doc against document to specified destination
+      - trigger: validate-story-draft
+        description: Run validate-next-story task against provided story file
+
+  sm:
+    name: Bob
+    title: Scrum Master
+    icon: 🏃
+    persona_file: .bmad-core/agents/sm.md
+    claude_code_command: /BMad:agents:sm
+    claude_code_alias: /sm
+    commands:
+      - trigger: help
+        description: Show numbered list of commands
+      - trigger: correct-course
+        description: Execute task correct-course.md
+      - trigger: draft
+        description: Execute task create-next-story.md
+      - trigger: story-checklist
+        description: Execute task execute-checklist.md with story-draft-checklist.md
+
+  # UX Expert (additional agent not in core workflow)
+  ux:
+    name: Sally
+    title: UX Expert
+    icon: 🎨
+    persona_file: .bmad-core/agents/ux-expert.md
+    claude_code_command: /BMad:agents:ux-expert
+    claude_code_alias: /ux-expert
+    commands:
+      - trigger: help
+        description: Show numbered list of commands
+      - trigger: plan-project
+        description: UX Workflows, Website Planning, and UI AI Prompt Generation
+
+# State machine rules for story workflow
+# v4 uses different status values and workflow than v6
+state_machine:
+  # Story creation phase
+  "Draft":
+    agent: po
+    command: validate-story-draft
+    description: PO validates draft story before development
+
+  # Development phase
+  "Approved":
+    agent: dev
+    command: develop-story
+    description: Story approved by PO, ready for DEV implementation
+
+  "Ready":
+    agent: dev
+    command: develop-story
+    description: Story ready for DEV implementation
+
+  "In Progress":
+    agent: dev
+    command: develop-story
+    description: Story currently being implemented by DEV
+
+  # Review phase - REQUIRES CONDITIONAL ROUTING
+  # If gate data is present in context → route to dev/review-qa
+  # If gate data is absent from context → use this default (qa/review)
+  "Ready for Review":
+    agent: qa
+    command: review
+    description: "CONDITIONAL: Default routing when no gate data present, override to dev/review-qa if gate data exists"
+
+  # Terminal states
+  "Done":
+    agent: null
+    command: null
+    description: Story complete, QA gate passed
+
+  # Terminal states
+  "Ready for Done":
+    agent: null
+    command: null
+    description: Story complete, Dev agent QA review completed.
+
+  "Blocked":
+    agent: null
+    command: null
+    description: Requires user intervention
+
+# Conditional routing logic for "Ready for Review" status
+conditional_routing:
+  "Ready for Review":
+    description: "Routing depends on whether gate data is present in the context"
+
+    routing_logic:
+      no_gate_data:
+        agent: qa
+        command: review
+        reasoning: "No gate data in context - QA review hasn't been performed yet"
+
+      gate_data_present:
+        agent: dev
+        command: review-qa
+        reasoning: "Gate data present in context - DEV must process QA feedback"
+
+        # DEV agent's review-qa workflow handles all gate decisions:
+        # - PASS/WAIVED: DEV reads gate, marks story Done
+        # - CONCERNS/FAIL: DEV reads gate, applies fixes, keeps status "Ready for Review"
+
+    notes: |
+      The orchestrator provides gate file data in the context when it exists.
+
+      When status is "Ready for Review":
+      - If gate data IS in context → route to dev/review-qa
+      - If gate data NOT in context → route to qa/review
+
+      The story status stays "Ready for Review" throughout the QA-DEV loop.
+      Gate data presence (not status value) determines routing.
+
+# Expected state transitions after running workflows
+expected_transitions:
+  develop-story:
+    input_status: ["Approved", "Ready", "In Progress"]
+    output_status: ["Ready for Review", "In Progress"]
+    notes: "DEV completes tasks, sets status to Ready for Review when done"
+
+  review:
+    input_status: ["Ready for Review"]
+    output_status: ["Ready for Review", "Done"]
+    notes: "QA reviews and creates gate file (PASS/CONCERNS/FAIL/WAIVED)"
+
+  review-qa:
+    input_status: ["Ready for Review"]
+    output_status: ["Ready for Review", "Ready for Done", "Done"]
+    notes: "DEV applies QA fixes, may complete or need another review"
+
+  validate-story-draft:
+    input_status: ["Draft"]
+    output_status: ["Approved", "Ready", "Blocked"]
+    notes: "PO validates draft: GO→marks Approved or Ready for development, NO-GO→marks Blocked and halts workflow"
+
+  draft:
+    input_status: ["N/A"]
+    output_status: ["Draft"]
+    notes: "SM creates new draft story from PRD/Architecture"
+
+# Orchestration rules for LLM decision making
+orchestration_rules:
+  # Terminal states (check first)
+  - 'If story status is "Done" or "Ready for Done", return action: "complete"'
+  - 'If story status is "Blocked", return action: "halt" with reasoning'
+
+  # Agent decision overrides (check before routing)
+  - 'CRITICAL: Check last agent output for explicit decisions BEFORE using state machine routing'
+  - 'If agent output contains "**NO-GO**" (markdown bold), return action: "halt" immediately'
+  - 'PO agent validate-story-draft with NO-GO → halt with reasoning, do not proceed to development'
+  - 'Pattern to detect: "**NO-GO**" or "Final Assessment.*NO-GO" or plain "NO-GO" text'
+  - 'QA agent gate decisions are handled via gate file (CONCERNS/FAIL route to DEV, not halt)'
+  - 'Agent explicit decisions (NO-GO, BLOCKED, HALT) override state machine routing'
+
+  # Conditional routing for "Ready for Review"
+  - 'If status is "Ready for Review", check if gate data is present in the context'
+  - 'Gate data present in context → route to agent: dev, command: review-qa'
+  - 'Gate data NOT present in context → route to agent: qa, command: review'
+  - 'DEV review-qa workflow handles gate decisions: PASS/WAIVED→mark Done, CONCERNS/FAIL→apply fixes'
+  - 'Uses DEV→QA→DEV workflow loop with separate QA review agent'
+  - 'QA creates gate file but does NOT change story status - orchestrator or DEV changes status'
+  - 'If agent output says story already complete/reviewed, verify status before routing'
+  - 'If agent explicitly suggests next command, strongly consider it'
+  - 'Never run same workflow twice if agent confirms work already complete'
+  - 'Use state_machine as default routing, but "Ready for Review" requires conditional_routing logic'
+  - 'If iteration exceeds max_iterations, return action: "halt"'
+
+# Agent output patterns to detect
+agent_patterns:
+  completion_indicators:
+    - "Story [\\d.]+ complete"
+    - "Status: Done"
+    - "Status: Ready for Done"
+    - "All acceptance criteria met"
+    - "Implementation complete"
+    - "ready for review"
+
+  gate_decisions:
+    - "Gate: (PASS|CONCERNS|FAIL|WAIVED)"
+    - "Quality Score: [\\d]+/100"
+
+  po_validation_decisions:
+    - "\\*\\*GO\\*\\*"
+    - "\\*\\*NO-GO\\*\\*"
+    - "Decision: (GO|NO-GO)"
+    - "Validation: (GO|NO-GO)"
+    - "Story validation: (GO|NO-GO)"
+    - "Final Assessment.*NO-GO"
+
+  suggestions:
+    - "run \\*(\\w+-?\\w*)"
+    - "execute \\*(\\w+-?\\w*)"
+    - "Command: \\*(\\w+-?\\w*)"
+
+  halt_indicators:
+    - "HALT"
+    - "NO-GO"
+    - "NO GO"
+    - "\\*\\*NO-GO\\*\\*"
+    - "Decision: NO-GO"
+    - "Validation: NO-GO"
+    - "Final Assessment.*NO-GO"
+    - "cannot proceed"
+    - "blocked"
+    - "requires user input"
+    - "ambiguous"
+    - "missing dependencies"
+
+  already_complete:
+    - "already complete"
+    - "already reviewed"
+    - "Status: Done"
+    - "Status: Ready for Done"
+
+# QA Gate file format (orchestrator loads and provides this data in context)
+qa_gate:
+  description: "Gate data is loaded by orchestrator and provided in decision context"
+  fields:
+    - gate  # PASS | CONCERNS | FAIL | WAIVED
+    - status_reason
+    - quality_score
+    - top_issues
+  usage: "LLM checks for presence of gate data in context, not filesystem"
+
+# BMAD v4 Workflow Details
+v4_notes: |
+  BMAD v4 workflow cycles:
+
+  STORY VALIDATION (PO):
+  0. SM creates Draft story (*draft)
+  1. PO validates draft (*validate-story-draft):
+     - GO decision → PO marks story "Ready", workflow proceeds to development
+     - NO-GO decision → PO marks story "Blocked", orchestrator HALTS immediately
+  2. Orchestrator detects NO-GO in agent output → action: "halt" (do not proceed)
+
+  DEVELOPMENT CYCLE (DEV-QA-DEV):
+  1. DEV implements story (*develop-story) → sets status to "Ready for Review"
+  2. Orchestrator loads gate data (if exists) and provides in decision context:
+     - No gate data in context → route to QA (*review)
+     - Gate data present in context → route to DEV (*review-qa)
+  3. QA reviews and creates gate file (*review) → status REMAINS "Ready for Review"
+  4. DEV processes QA feedback (*review-qa):
+     - Gate = PASS/WAIVED → DEV marks story "Done"
+     - Gate = CONCERNS/FAIL → DEV applies fixes, status stays "Ready for Review"
+  5. If fixes applied, loop back to step 2 (orchestrator routes back to QA)
+
+  CRITICAL WORKFLOW DETAILS:
+  - PO NO-GO decisions immediately halt workflow (do not proceed to development)
+  - QA agent creates gate file but does NOT change story status
+  - Story status stays "Ready for Review" throughout QA-DEV feedback loop
+  - Orchestrator code loads gate data and provides it in LLM decision context
+  - LLM checks for gate data presence (not filesystem) to route correctly
+  - Gate data present → always route to DEV review-qa
+  - DEV agent reads gate and decides: mark Done or apply fixes
+  - Agent explicit decisions (NO-GO, BLOCKED, HALT) override state machine routing
+
+  Key Workflow Characteristics:
+  - Separate DEV and QA agents with distinct responsibilities
+  - QA creates gate files in docs/qa/gates/ without changing story status
+  - Conditional routing required for "Ready for Review" status
+  - PO validates draft stories before DEV starts implementation
+  - Multiple agent types support full SDLC (Analyst, Architect, PM, PO, SM, DEV, QA, UX)
+
+# Extension notes
+notes: |
+  This workflow map is generated from BMAD v4 agent definitions.
+
+  Claude Code Integration:
+  - v4 uses colon-separated slash commands: /BMad:agents:{agent-id} (capital B)
+  - Short aliases also work: /dev, /qa, /pm, etc.
+  - Tasks can also be directly invoked: /BMad:tasks:{task-name}
+
+  Command invocation patterns:
+  - Two-step: "/dev" (load agent) then "*develop-story 3.1" (execute)
+  - One-step: "/dev *develop-story 3.1" (load AND execute immediately)
+
+  Orchestra should use one-step invocation:
+  - Full: "/BMad:agents:dev *develop-story 3.1"
+  - Alias: "/dev *develop-story 3.1"
+  - Pattern: "/{agent} *{trigger} {args}"
+
+  To add a new agent:
+  1. Create agent.md file in bmad-core/agents/
+  2. Regenerate this map with generator script
+  3. No orchestrator code changes needed
+
+  To modify workflow rules:
+  1. Update state_machine for new status values
+  2. Update expected_transitions for new commands
+  3. Test with LLM orchestrator
+  4. Refine orchestration_rules if needed

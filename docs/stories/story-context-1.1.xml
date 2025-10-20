@@ -1,0 +1,161 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.1</storyId>
+    <title>Investigate Bootloader/QSPI Conflict</title>
+    <status>Ready for Development</status>
+    <generatedAt>2025-10-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-1.1.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a firmware developer</asA>
+    <iWant>to understand how the bootloader uses QSPI and memory resources</iWant>
+    <soThat>I can design a safe state persistence mechanism that doesn't conflict with bootloader operations</soThat>
+    <tasks>
+      - Research Daisy bootloader documentation and source code (AC: #1, #2)
+        - Locate bootloader version and source
+        - Document bootloader QSPI usage
+      - Analyze QSPI memory layout (AC: #2, #6)
+        - Map bootloader reserved regions
+        - Identify safe application regions
+      - Determine bootloader timing requirements (AC: #3, #4)
+        - Measure bootloader execution time
+        - Specify safe delay value
+      - Document root cause analysis (AC: #5, #7)
+        - Explain state corruption mechanism
+        - Document SD card/QSPI interactions
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    - Bootloader version, source location, and behavior documented
+    - QSPI memory layout identified with specific addresses (bootloader region, firmware region, safe application region)
+    - Bootloader execution timeline documented with timing values
+    - Minimum required delay before QSPI access determined (e.g., 100ms)
+    - Root cause of state corruption identified and explained
+    - Safe QSPI address range specified for PersistentStorage
+    - Any SD card loading interference with QSPI documented
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Documentation</title>
+        <section>Persistent Settings Storage</section>
+        <snippet>Settings are stored in QSPI flash using PersistentStorage template. Current implementation declares but doesn't initialize storage properly.</snippet>
+      </doc>
+      <doc>
+        <path>docs/development-guide.md</path>
+        <title>Development Guide</title>
+        <section>Build Process</section>
+        <snippet>Makefile includes APP_TYPE=BOOT_QSPI which indicates firmware loads from QSPI flash via bootloader.</snippet>
+      </doc>
+      <doc>
+        <path>BUILD.md</path>
+        <title>Build Instructions</title>
+        <section>Build Configuration</section>
+        <snippet>Project uses Daisy bootloader with QSPI boot mode. Bootloader loads firmware from SD card to QSPI.</snippet>
+      </doc>
+      <doc>
+        <path>docs/source-tree-analysis.md</path>
+        <title>Source Tree Analysis</title>
+        <section>Firmware Structure</section>
+        <snippet>Documents current firmware entry point and initialization sequence without bootloader coordination.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>main.cpp</path>
+        <kind>firmware entry</kind>
+        <symbol>main</symbol>
+        <lines>208-256</lines>
+        <reason>Main initialization sequence where bootloader handoff occurs and QSPI storage must be initialized</reason>
+      </artifact>
+      <artifact>
+        <path>main.cpp</path>
+        <kind>persistent storage</kind>
+        <symbol>PersistentStorage&lt;Settings&gt;</symbol>
+        <lines>56, 212</lines>
+        <reason>QSPI storage declaration and initialization that may conflict with bootloader</reason>
+      </artifact>
+      <artifact>
+        <path>main.cpp</path>
+        <kind>settings structure</kind>
+        <symbol>Settings</symbol>
+        <lines>44-54</lines>
+        <reason>Data structure to be persisted to QSPI flash</reason>
+      </artifact>
+      <artifact>
+        <path>Makefile</path>
+        <kind>build configuration</kind>
+        <symbol>APP_TYPE</symbol>
+        <lines>7-13</lines>
+        <reason>Defines BOOT_QSPI mode and bootloader programming sequence</reason>
+      </artifact>
+      <artifact>
+        <path>libDaisy/</path>
+        <kind>library</kind>
+        <symbol>DaisyPatchSM</symbol>
+        <lines>N/A</lines>
+        <reason>Daisy platform library containing bootloader implementation and QSPI drivers</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <daisy>
+        <library name="libDaisy" path="libDaisy/" version="unknown">Core Daisy platform library with bootloader and QSPI support</library>
+        <library name="DaisySP" path="DaisySP/" version="unknown">Daisy DSP library for audio processing</library>
+      </daisy>
+      <build>
+        <tool name="GCC ARM" version="unknown">ARM cross-compiler for STM32H7</tool>
+        <tool name="Make" version="GNU Make">Build system</tool>
+      </build>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Investigation only - no code changes permitted in this story
+    - Must document bootloader behavior from official Daisy sources
+    - QSPI memory addresses must be specific and verified
+    - Timing recommendations must be justified with measurements or documentation
+    - Focus on STM32H7 and Daisy Patch.init() platform specifics
+    - Deliverables must be markdown documents in docs/ folder
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>PersistentStorage::Init</name>
+      <kind>function</kind>
+      <signature>void Init(Settings defaults, uint32_t address_offset)</signature>
+      <path>libDaisy/src/per/qspi.h</path>
+    </interface>
+    <interface>
+      <name>DaisyPatchSM::Init</name>
+      <kind>function</kind>
+      <signature>void Init()</signature>
+      <path>libDaisy/src/daisy_patch_sm.h</path>
+    </interface>
+    <interface>
+      <name>QSPI Memory Map</name>
+      <kind>hardware interface</kind>
+      <signature>Address ranges for bootloader and application regions</signature>
+      <path>To be documented in investigation</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>This is an investigation story with documentation deliverables. No automated tests required. Validation criteria defined in Acceptance Tests section of story markdown.</standards>
+    <locations>N/A - Investigation story</locations>
+    <ideas>
+      <idea ac="AC1">Verify bootloader version matches documentation by inspecting libDaisy source</idea>
+      <idea ac="AC2">Create memory map diagram showing all QSPI regions with addresses</idea>
+      <idea ac="AC3">Document bootloader execution timeline with timing values</idea>
+      <idea ac="AC4">Specify minimum delay with justification from measurements or docs</idea>
+      <idea ac="AC5">Explain root cause of corruption with technical details</idea>
+      <idea ac="AC6">Document safe address range for PersistentStorage initialization</idea>
+      <idea ac="AC7">Document any SD card/QSPI interference mechanisms</idea>
+    </ideas>
+  </tests>
+</story-context>

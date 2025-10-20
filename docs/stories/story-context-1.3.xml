@@ -1,0 +1,122 @@
+<story-context id="bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.3</storyId>
+    <title>Validate QSPI Memory Layout Safety</title>
+    <status>Ready for Development</status>
+    <generatedAt>2025-10-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/stories/story-1.3.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a firmware developer</asA>
+    <iWant>to verify that PersistentStorage uses non-bootloader QSPI space</iWant>
+    <soThat>settings don't overwrite bootloader or firmware code</soThat>
+    <tasks>
+      - Analyze linker map file for memory allocation
+      - Verify no overlap between bootloader and storage regions
+      - Add debug logging to show runtime QSPI address
+      - Document memory layout in code comments
+      - Verify build reproducibility across multiple clean builds
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    - PersistentStorage allocation verified to NOT overlap bootloader space
+    - Linker script reviewed and no conflicting sections found
+    - Bootloader space clearly reserved/protected from application writes
+    - Memory layout documented in code comments with addresses
+    - Build process confirms safe memory allocation
+    - Verification performed multiple times (reproducible)
+    - Runtime logging shows QSPI storage address
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Documentation</title>
+        <section>Deployment Architecture</section>
+        <snippet>Memory usage shows QSPI flash usage but doesn't detail memory map or bootloader regions.</snippet>
+      </doc>
+      <doc>
+        <path>docs/stories/story-1.1.md</path>
+        <title>Story 1.1 - Bootloader Investigation</title>
+        <section>Memory Layout</section>
+        <snippet>Investigation deliverable should contain QSPI memory map with bootloader and safe application regions defined.</snippet>
+      </doc>
+      <doc>
+        <path>Makefile</path>
+        <title>Build Configuration</title>
+        <section>APP_TYPE</section>
+        <snippet>APP_TYPE=BOOT_QSPI indicates bootloader involvement in QSPI management.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>main.cpp</path>
+        <kind>firmware entry</kind>
+        <symbol>main</symbol>
+        <lines>208-256</lines>
+        <reason>Location to add QSPI address verification logging</reason>
+      </artifact>
+      <artifact>
+        <path>libDaisy/core/STM32H7.ld</path>
+        <kind>linker script</kind>
+        <symbol>MEMORY sections</symbol>
+        <lines>N/A</lines>
+        <reason>Defines QSPI memory regions and should show no overlaps</reason>
+      </artifact>
+      <artifact>
+        <path>build/no_such_verb.map</path>
+        <kind>build artifact</kind>
+        <symbol>Memory map</symbol>
+        <lines>N/A</lines>
+        <reason>Generated linker map showing actual memory allocation to verify safety</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <build>
+        <tool name="GCC ARM Linker" version="unknown">Creates memory map showing final memory layout</tool>
+        <tool name="Make" version="GNU Make">Build system that generates map files</tool>
+      </build>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Investigation/verification only - minimal code changes
+    - Must not modify linker script (verify only)
+    - Must not change bootloader loading code
+    - Build process must remain unchanged
+    - Binary size must be unchanged
+    - Must use Story 1.1 findings as baseline
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Linker Memory Sections</name>
+      <kind>build configuration</kind>
+      <signature>MEMORY { QSPI : ORIGIN = ..., LENGTH = ... }</signature>
+      <path>libDaisy/core/STM32H7.ld</path>
+    </interface>
+    <interface>
+      <name>PersistentStorage Address</name>
+      <kind>runtime verification</kind>
+      <signature>uint32_t address = (uint32_t)&amp;storage</signature>
+      <path>main.cpp</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Verification story with documentation deliverables. Testing involves linker map analysis and runtime address verification. Reproducibility testing across multiple clean builds.</standards>
+    <locations>build/ directory for linker map files</locations>
+    <ideas>
+      <idea ac="Linker map">Test 1: Build firmware and analyze build/no_such_verb.map to verify memory regions don't overlap</idea>
+      <idea ac="Runtime address">Test 2: Add debug logging to show PersistentStorage address at runtime and verify it's in safe range</idea>
+      <idea ac="Linker script">Test 3: Review libDaisy/core/STM32H7.ld MEMORY sections for proper QSPI partitioning</idea>
+      <idea ac="Reproducibility">Test 4: Perform 4 clean builds and verify memory layout is identical each time</idea>
+      <idea ac="Bootloader safety">Test 5: Power cycle with validated layout and confirm bootloader continues working</idea>
+    </ideas>
+  </tests>
+</story-context>
