@@ -9,11 +9,13 @@
 
 No Such Verb is an experimental audio effects pedal implemented as embedded firmware for the Daisy Patch.init() platform. The system implements a real-time audio processing pipeline using the Daisy platform's callback-based architecture, combining:
 
-- **Overdrive effect** with harmonic saturation (toggleable via button)
-- **Jitter modulation** (square noise with configurable mix)
+- **Overdrive effect** with harmonic saturation (toggleable via button B7)
+- **Square noise modulation** paired with overdrive (intensity controlled by CV2)
 - **Schroeder-Moorer algorithmic reverb** with configurable feedback and filtering
+- **AM LFO modulation** with filter randomization (toggleable via B8, intensity by CV2)
 - **Dynamic tone shaping** (high-pass filter on reverb tail)
-- **Persistent settings storage** via QSPI flash
+- **Unified intensity control** (CV2 knob controls all active effects simultaneously)
+- **Persistent settings storage** via SD card (both overdrive and modulation states)
 
 The architecture prioritizes low-latency real-time processing (sample-rate callback execution), deterministic resource allocation, and responsive control via front-panel CV inputs and toggle switches with status LED feedback.
 
