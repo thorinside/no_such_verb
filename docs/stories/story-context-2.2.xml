@@ -1,0 +1,95 @@
+<story-context id="epic-2-story-2" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2</storyId>
+    <title>Remap Toggle Switch to Filter Randomization/AM LFO</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-20</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>/docs/stories/story-2.2.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>module operator</asA>
+    <iWant>the toggle switch to enable or disable the existing filter randomization/AM LFO effect</iWant>
+    <soThat>I have direct control over when modulation is applied to my signal</soThat>
+    <tasks>
+      - Locate existing modulation implementation
+      - Connect B8 to modulation enable
+      - Implement modulation gating logic
+      - Add state persistence
+      - Implement LED feedback
+      - Audio glitch prevention
+      - Testing and validation
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. Toggle switch (B8) controls existing filter randomization/AM LFO enable state
+    2. When enabled, existing modulation effect becomes active
+    3. When disabled, signal passes through without modulation
+    4. State persisted to QSPI (using existing persistence from Epic 1)
+    5. LED indicator reflects modulation state
+    6. Toggle state recovered correctly on power cycle
+    7. No audio glitches when toggling during playback
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      - /docs/bmm-epics.md#Story-2.2
+      - /docs/prd/epic-2.md#Control-Remapping
+      - /docs/stories/story-1.2.md - QSPI persistence pattern
+      - /docs/stories/story-1.4.md - LED synchronization
+    </docs>
+    <code>
+      - main.cpp:99-102 - Toggle switch processing
+      - main.cpp:122-124 - Jitter/modulation control (CV_2)
+      - main.cpp:27 - Jitter object declaration
+      - main.cpp:41 - jitter_mix_level variable
+      - main.cpp:48-58 - Settings struct for persistence
+      - main.cpp:62 - SDSettings storage
+      - main.cpp:76-83 - LED control functions
+    </code>
+    <dependencies>
+      - Story 2.1 completion (toggle decoupled)
+      - Epic 1 QSPI persistence
+      - Existing jitter/modulation implementation
+      - LED control infrastructure
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Must leverage existing modulation code
+    - Must follow Epic 1 persistence patterns
+    - Must not introduce audio glitches
+    - Rate limit saves to 100ms minimum
+  </constraints>
+
+  <interfaces>
+    - Toggle switch hardware (B8)
+    - Jitter modulation effect
+    - Settings struct for persistence
+    - LED output (hw.SetLed)
+    - MIDI debug output
+  </interfaces>
+
+  <tests>
+    <standards>
+      - Audio quality testing with spectrum analyzer
+      - Smooth transitions without clicks/pops
+      - Power cycle testing (10+ cycles)
+    </standards>
+    <locations>
+      - AudioCallback for modulation gating
+      - Toggle handler for enable/disable
+      - Settings save/load for persistence
+    </locations>
+    <ideas>
+      - Test modulation enable/disable
+      - Rapid toggle scenarios
+      - State persistence verification
+      - LED state synchronization
+      - Audio artifact detection
+    </ideas>
+  </tests>
+</story-context>

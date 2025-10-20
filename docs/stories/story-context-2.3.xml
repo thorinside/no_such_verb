@@ -1,0 +1,97 @@
+<story-context id="epic-2-story-3" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>3</storyId>
+    <title>Remap Overdrive Knob to Control Modulation Intensity</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-20</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>/docs/stories/story-2.3.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>performer using No Such Verb</asA>
+    <iWant>the overdrive gain knob to additionally control the filter randomization/AM LFO intensity when the toggle is on</iWant>
+    <soThat>I can adjust all effect intensities together while keeping modulation optional</soThat>
+    <tasks>
+      - Analyze current knob implementation
+      - Implement additional knob control for modulation
+      - Connect knob to modulation parameters
+      - Implement smooth transitions
+      - Maintain overdrive independence
+      - Optimize performance
+      - Testing and validation
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. When toggle switch OFF: Overdrive gain knob controls overdrive gain and square noise only
+    2. When toggle switch ON: Overdrive gain knob controls overdrive gain, square noise, AND modulation intensity
+    3. Smooth transitions when adjusting knob (no stepping artifacts)
+    4. Knob position correctly interpreted in both modes
+    5. Audio engine properly applies modulation based on intensity setting
+    6. No performance degradation from dual-purpose knob logic
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      - /docs/bmm-epics.md#Story-2.3
+      - /docs/prd/epic-2.md#Control-Remapping
+      - /docs/stories/story-2.2.md - Modulation enable implementation
+    </docs>
+    <code>
+      - main.cpp:104-143 - CV knob processing
+      - main.cpp:122-124 - Current jitter_mix_level control
+      - main.cpp:41 - jitter_mix_level variable
+      - main.cpp:22-23 - SquareNoise objects
+      - main.cpp:24-25 - Overdrive objects
+      - main.cpp:13-14 - MIN_OVERDRIVE, MAX_OVERDRIVE constants
+      - main.cpp:14 - NOISE_FACTOR constant
+      - main.cpp:64-75 - KnobOnePoleFilter for smoothing
+    </code>
+    <dependencies>
+      - Story 2.2 completion (modulation toggle)
+      - Existing overdrive implementation
+      - Existing square noise implementation
+      - Existing jitter/modulation implementation
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Knob always controls overdrive gain and square noise
+    - Modulation intensity only when toggle enabled
+    - Must maintain smooth parameter changes
+    - No performance degradation allowed
+  </constraints>
+
+  <interfaces>
+    - CV knob hardware inputs
+    - Overdrive effect parameters
+    - SquareNoise effect parameters
+    - Jitter modulation parameters
+    - KnobOnePoleFilter for smoothing
+  </interfaces>
+
+  <tests>
+    <standards>
+      - Use sine wave input for clear modulation
+      - Oscilloscope for depth verification
+      - Spectrum analyzer for artifacts
+      - Subjective listening tests
+    </standards>
+    <locations>
+      - CV knob processing section
+      - Overdrive parameter application
+      - Noise generation control
+      - Jitter intensity control
+    </locations>
+    <ideas>
+      - Test knob in both modes
+      - Full range of knob positions
+      - Rapid mode switching while turning
+      - Verify all three parameters scale
+      - Check for zipper noise
+      - CPU usage profiling
+    </ideas>
+  </tests>
+</story-context>

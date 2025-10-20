@@ -11,15 +11,24 @@
 
 ### Goals
 
-**Primary Goal:** Fix critical firmware state persistence issue preventing the No Such Verb module from remembering operational state across power cycles, enabling live performance workflow integration.
+**Phase 1 (Complete - Epic 1):** Fixed critical firmware state persistence issue preventing the No Such Verb module from remembering operational state across power cycles, enabling live performance workflow integration.
 
-**Objectives:**
-1. Enable automatic recovery of button toggle state (overdrive on/off) on power-on
-2. Synchronize LED indicators with recovered state immediately at boot
-3. Resolve bootloader/QSPI conflict causing state corruption
-4. Maintain bootloader functionality for SD card firmware loading
-5. Implement reliable, rate-limited QSPI persistence mechanism
-6. Document bootloader/QSPI coordination for future maintainers
+**Phase 2 (Current - Epic 2):** Enhance user interface control scheme by remapping existing controls to provide more intuitive access to filter randomization/AM LFO effects while maintaining clean overdrive control.
+
+**Epic 1 Objectives (Complete):**
+1. ✅ Enable automatic recovery of button toggle state (overdrive on/off) on power-on
+2. ✅ Synchronize LED indicators with recovered state immediately at boot
+3. ✅ Resolve bootloader/QSPI conflict causing state corruption
+4. ✅ Maintain bootloader functionality for SD card firmware loading
+5. ✅ Implement reliable, rate-limited QSPI persistence mechanism
+6. ✅ Document bootloader/QSPI coordination for future maintainers
+
+**Epic 2 Objectives (In Progress):**
+1. Repurpose toggle switch from calculation order to modulation effect control
+2. Implement dual-purpose overdrive knob (gain vs. modulation intensity)
+3. Enable clean overdrive sweeps without modulation artifacts
+4. Maintain independent overdrive on/off button functionality
+5. Update documentation for new control scheme
 
 ### Background Context
 
@@ -178,7 +187,8 @@ The No Such Verb is an experimental audio effects pedal firmware for the Daisy P
 
 | Epic | Goal | Stories | Points | Status |
 |------|------|---------|--------|--------|
-| **EPIC-001: Firmware State Persistence & Recovery** | Enable automatic state recovery on power-on, resolve bootloader/QSPI conflict | 6 | 10-15 | Draft |
+| **EPIC-001: Firmware State Persistence & Recovery** | Enable automatic state recovery on power-on, resolve bootloader/QSPI conflict | 6 | 10-15 | Complete |
+| **EPIC-002: Filter Randomization/AM LFO Control Remapping** | Remap UI controls to improve access to existing modulation effects | 5 | 10-12 | Draft |
 
 > **Note:** Detailed epic breakdown with full story specifications is available in [bmm-epics.md](./bmm-epics.md)
 

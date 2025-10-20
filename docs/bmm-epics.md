@@ -275,3 +275,188 @@ So that [benefit/value].
 
 **Document Status:** ✅ Ready for Development
 **Next Step:** Assign Story 1.1 to firmware developer (critical path)
+
+---
+
+## EPIC-002: Filter Randomization/AM LFO Control Remapping
+
+**Epic ID:** EPIC-002-FILTER-AM-CONTROL-v1
+**Status:** Draft
+**Priority:** High (UI Enhancement)
+**Effort:** 6-10 story points
+**Duration:** 1 week
+
+### Epic Goal
+
+Remap the existing UI controls to provide better access to the filter randomization/amplitude modulation LFO feature: the toggle switch will enable/disable the effect (instead of controlling calculation order), and the overdrive gain knob will control the effect intensity only when the switch is enabled, allowing for cleaner overdrive sweeps when the effect is disabled.
+
+### Epic Value Proposition
+
+**For Users:** Live performers gain intuitive control over the existing filter randomization/AM LFO effect, with the ability to perform clean overdrive sweeps without unwanted modulation, or introduce controlled modulation intensity when desired for creative sound design.
+
+**For Development:** Improves UI/UX by repurposing the toggle switch from a less-used calculation order control to a more valuable effect gate, creating a more logical control scheme where related parameters are grouped together.
+
+### Stories in EPIC-002
+
+---
+
+## Story 2.1: Decouple Toggle Switch from Calculation Order
+
+**As a** firmware developer,
+**I want** to remove the toggle switch's control over calculation order,
+**So that** it can be repurposed for controlling the filter randomization/AM LFO effect.
+
+**Acceptance Criteria:**
+
+1. Toggle switch (B8) button handler disconnected from calculation order logic
+2. Calculation order fixed to optimal default setting
+3. No regression in audio processing quality
+4. Existing overdrive functionality (B7) remains unchanged
+5. Code refactored to remove or bypass calculation order toggle infrastructure
+6. Serial debug confirms switch no longer affects calculation order
+7. Audio output verified to remain consistent regardless of switch position
+
+**Prerequisites:** Epic 1 complete (state persistence functional)
+
+**Story Points:** 2
+
+---
+
+## Story 2.2: Remap Toggle Switch to Filter Randomization/AM LFO
+
+**As a** module operator,
+**I want** the toggle switch to enable or disable the existing filter randomization/AM LFO effect,
+**So that** I have direct control over when modulation is applied to my signal.
+
+**Acceptance Criteria:**
+
+1. Toggle switch (B8) controls existing filter randomization/AM LFO enable state
+2. When enabled, existing modulation effect becomes active
+3. When disabled, signal passes through without modulation
+4. State persisted to QSPI (using existing persistence from Epic 1)
+5. LED indicator reflects modulation state:
+   - Consider using existing LED or adding visual feedback
+6. Toggle state recovered correctly on power cycle
+7. No audio glitches when toggling during playback
+
+**Prerequisites:** Story 2.1 (switch decoupled from calculation order)
+
+**Story Points:** 2-3
+
+---
+
+## Story 2.3: Remap Overdrive Knob to Control Modulation Intensity
+
+**As a** performer using No Such Verb,
+**I want** the overdrive gain knob to control the filter randomization/AM LFO intensity when the toggle is on,
+**So that** I can adjust the modulation depth while keeping overdrive sweeps clean when modulation is off.
+
+**Acceptance Criteria:**
+
+1. When toggle switch OFF:
+   - Overdrive gain knob has no effect on modulation
+   - Knob continues to control overdrive gain normally
+   - Clean overdrive sweeps possible without modulation artifacts
+2. When toggle switch ON:
+   - Overdrive gain knob controls modulation intensity/depth (0-100%)
+   - Modulation intensity scales linearly with knob position
+   - Existing modulation parameters properly scaled
+3. Smooth transitions when adjusting knob (no stepping artifacts)
+4. Knob position correctly interpreted in both modes
+5. Audio engine properly applies modulation based on intensity setting
+6. No performance degradation from dual-purpose knob logic
+
+**Prerequisites:** Story 2.2 (toggle switch remapped to modulation)
+
+**Story Points:** 3
+
+---
+
+## Story 2.4: Maintain Overdrive Button Functionality
+
+**As a** user,
+**I want** button B7 to continue controlling overdrive on/off independently,
+**So that** I can still enable/disable overdrive regardless of filter randomization state.
+
+**Acceptance Criteria:**
+
+1. Button B7 continues to toggle overdrive effect on/off
+2. Overdrive state independent of filter randomization state
+3. Both effects can be active simultaneously without conflicts
+4. Overdrive gain still affected by knob position (when available)
+5. LED indicators correctly show both states (if applicable)
+6. State persistence includes both overdrive and randomization settings
+7. Clean signal path when both effects are enabled
+
+**Prerequisites:** Stories 2.1-2.3 (new control scheme in place)
+
+**Story Points:** 2
+
+---
+
+## Story 2.5: Update User Documentation
+
+**As a** future user of No Such Verb,
+**I want** clear documentation of the new control scheme,
+**So that** I understand how to use the filter randomization/AM LFO and overdrive features.
+
+**Acceptance Criteria:**
+
+1. README.md updated with new control mapping:
+   - Toggle switch (B8): Filter randomization/AM LFO on/off
+   - Overdrive knob: Dual purpose based on toggle state
+   - Button B7: Overdrive on/off
+2. User guide section created explaining:
+   - How to achieve clean overdrive sweeps (toggle OFF)
+   - How to introduce modulation effects (toggle ON)
+   - Interaction between controls and dual-purpose knob
+3. Patch examples documented showing common use cases
+4. Troubleshooting section for new features
+5. Version history updated with Epic 2 changes
+6. Any MIDI documentation updated if applicable
+
+**Prerequisites:** Stories 2.1-2.4 (implementation complete)
+
+**Story Points:** 1-2
+
+---
+
+## Story Sequencing & Dependencies
+
+### Critical Path
+
+```
+Story 2.1 (Decouple Switch) [CRITICAL]
+    ↓
+Story 2.2 (Filter Toggle) [CRITICAL]
+    ↓
+Story 2.3 (Knob Dual Purpose) [CRITICAL]
+    ↓
+Story 2.4 (Maintain B7) [VALIDATION]
+    ↓
+Story 2.5 (Documentation) [FINAL]
+    ↓
+Epic Complete
+```
+
+### Story Dependencies
+
+| Story | Depends On | Can Start After |
+|-------|-----------|-----------------|
+| 2.1 | Epic 1 | Epic 1 complete |
+| 2.2 | 2.1 | Story 2.1 complete |
+| 2.3 | 2.2 | Story 2.2 complete |
+| 2.4 | 2.1, 2.2, 2.3 | Stories 2.1-2.3 complete |
+| 2.5 | 2.1-2.4 | Stories 2.1-2.4 complete |
+
+### Parallelization Opportunities
+
+- **Phase 1:** Story 2.1 (decouple) - 2-3 hours
+- **Phase 2:** Story 2.2 (toggle implementation) - 3-4 hours
+- **Phase 3:** Story 2.3 (knob dual purpose) - 3-4 hours
+- **Phase 4:** Story 2.4 (validation) - 2 hours
+- **Phase 5:** Story 2.5 (documentation) - 1-2 hours
+
+**Timeline:**
+- Sequential: 1.5-2 weeks
+- Recommended: 1 week (focused development)

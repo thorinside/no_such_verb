@@ -31,7 +31,9 @@ Svf hp_filter_r;
 
 bool startup = true;
 bool button_pressed = false;
+bool toggle_pressed = false;
 volatile bool enable_overdrive = false;
+volatile bool filterModulationEnabled = false;
 volatile bool save_settings = false;
 volatile bool led_target_state = false;
 bool led_current_state = false;
@@ -49,11 +51,13 @@ struct Settings
 {
     int version = SETTINGS_VERSION;
     bool is_overdrive_enabled = false;
+    bool is_filter_modulation_enabled = false;
 
     bool operator!=(const Settings &other) const
     {
         return version != other.version
-            || is_overdrive_enabled != other.is_overdrive_enabled;
+            || is_overdrive_enabled != other.is_overdrive_enabled
+            || is_filter_modulation_enabled != other.is_filter_modulation_enabled;
     }
 };
 
@@ -99,8 +103,6 @@ void AudioCallback(const AudioHandle::InputBuffer in, AudioHandle::OutputBuffer 
     toggle.Debounce();
     hw.ProcessAllControls();
 
-    bool toggle_state = toggle.Pressed();
-
     float cv_values[8] = {
         hw.GetAdcValue(CV_1), hw.GetAdcValue(CV_2),
         hw.GetAdcValue(CV_3), hw.GetAdcValue(CV_4),
@@ -142,6 +144,7 @@ void AudioCallback(const AudioHandle::InputBuffer in, AudioHandle::OutputBuffer 
         }
     }
     if (startup) {
+        midi.sysex_printf_buffer("Calculation order: POST-reverb (fixed)\n");
         midi.sysex_send_buffer();
         startup = false;
     }
@@ -163,7 +166,20 @@ void AudioCallback(const AudioHandle::InputBuffer in, AudioHandle::OutputBuffer 
         button_pressed = false;
     }
 
-    led_target_state = enable_overdrive;
+    // Toggle switch (B8) handler for filter modulation enable/disable
+    if (toggle.Pressed() && !toggle_pressed) {
+        midi.sysex_printf_buffer("Toggle Pressed - Filter Modulation: %s\n",
+                                filterModulationEnabled ? "OFF" : "ON");
+        toggle_pressed = true;
+
+        filterModulationEnabled = !filterModulationEnabled;
+        save_settings = true;
+    } else if (!toggle.Pressed()) {
+        toggle_pressed = false;
+    }
+
+    // LED state: ON when overdrive OR filter modulation enabled, OFF when both disabled
+    led_target_state = enable_overdrive || filterModulationEnabled;
 
     float audio_in_l[size];
     float audio_in_r[size];
@@ -191,34 +207,36 @@ void AudioCallback(const AudioHandle::InputBuffer in, AudioHandle::OutputBuffer 
         const float dry_l = audio_in_l[i] * dry_level;
         const float dry_r = audio_in_r[i] * dry_level;
 
-        // Overdrive pre-reverb if toggle is on
-        if (toggle_state) {
-            audio_in_l[i] = overdrive_l.Process(audio_in_l[i]);
-            audio_in_r[i] = overdrive_r.Process(audio_in_r[i]);
-        }
-
         // Process input through high-pass filters
         hp_filter_l.Process(audio_in_l[i]);
         hp_filter_r.Process(audio_in_r[i]);
         audio_in_l[i] = hp_filter_l.High(); // Use high-pass output
         audio_in_r[i] = hp_filter_r.High(); // Use high-pass output
 
-        const float noise_l_out = noise_l.Process(audio_in_l[i]) * NOISE_FACTOR * jitter_mix_level;
-        const float noise_r_out = noise_r.Process(audio_in_r[i]) * NOISE_FACTOR * jitter_mix_level;
+        const float noise_l_out = filterModulationEnabled
+            ? noise_l.Process(audio_in_l[i]) * NOISE_FACTOR * jitter_mix_level
+            : 0.0f;
+        const float noise_r_out = filterModulationEnabled
+            ? noise_r.Process(audio_in_r[i]) * NOISE_FACTOR * jitter_mix_level
+            : 0.0f;
 
         reverb.Process((audio_in_l[i] + noise_l_out) * wet_level, (audio_in_r[i] + noise_r_out) * wet_level,
                        &audio_in_l[i], &audio_in_r[i]);
 
-        const float jitter_out = jitter.Process();
+        const float jitter_out = filterModulationEnabled ? jitter.Process() : 0.0f;
 
-        audio_out_l[i] = dry_l + audio_in_l[i] * (1 - jitter_mix_level + jitter_out * jitter_mix_level);
-        audio_out_r[i] = dry_r + audio_in_r[i] * (1 - jitter_mix_level + jitter_out * jitter_mix_level);
-
-        // Overdrive post-reverb if toggle is off
-        if (!toggle_state) {
-            audio_out_l[i] = overdrive_l.Process(audio_out_l[i]);
-            audio_out_r[i] = overdrive_r.Process(audio_out_r[i]);
+        if (filterModulationEnabled) {
+            audio_out_l[i] = dry_l + audio_in_l[i] * (1 - jitter_mix_level + jitter_out * jitter_mix_level);
+            audio_out_r[i] = dry_r + audio_in_r[i] * (1 - jitter_mix_level + jitter_out * jitter_mix_level);
+        } else {
+            // When modulation disabled, clean signal path without jitter
+            audio_out_l[i] = dry_l + audio_in_l[i];
+            audio_out_r[i] = dry_r + audio_in_r[i];
         }
+
+        // Calculation order fixed: Overdrive always applied post-reverb (optimal default)
+        audio_out_l[i] = overdrive_l.Process(audio_out_l[i]);
+        audio_out_r[i] = overdrive_r.Process(audio_out_r[i]);
     }
 
     limiter.ProcessBlock(audio_out_l, size, 1.1f);
@@ -270,7 +288,7 @@ int main() {
     // Initialize SD card settings storage
     // Using SD card because program is too large (549KB) for BOOT_SRAM mode (480KB limit)
     // BOOT_QSPI mode prevents QSPI writes (hardware limitation)
-    auto storage_result = storage.Init({SETTINGS_VERSION, false}, "nsv_settings.bin");
+    auto storage_result = storage.Init({SETTINGS_VERSION, false, false}, "nsv_settings.bin");
 
     if (storage_result == SDSettings<Settings>::Result::OK)
     {
@@ -278,10 +296,12 @@ int main() {
         if (loaded_settings.version == SETTINGS_VERSION) {
             // Settings loaded successfully with matching version
             enable_overdrive = loaded_settings.is_overdrive_enabled;
+            filterModulationEnabled = loaded_settings.is_filter_modulation_enabled;
             hw.WriteCvOut(CV_OUT_2, enable_overdrive ? 5.0f : 0.0f);
         } else {
             // Version mismatch: use safe defaults
             enable_overdrive = false;
+            filterModulationEnabled = false;
             hw.WriteCvOut(CV_OUT_2, 0.0f);
         }
         // Queue a save so defaults or loaded settings always persist to disk
@@ -291,10 +311,12 @@ int main() {
     {
         // SD card not available - use defaults (settings won't persist)
         enable_overdrive = false;
+        filterModulationEnabled = false;
         hw.WriteCvOut(CV_OUT_2, 0.0f);
     }
 
-    led_target_state = enable_overdrive;
+    // LED state: ON when overdrive OR filter modulation enabled, OFF when both disabled
+    led_target_state = enable_overdrive || filterModulationEnabled;
     if (storage_result != SDSettings<Settings>::Result::OK) {
         BlinkLedFeedback(4, 400, 200);  // SD init error
         RestoreLedToTarget();
@@ -342,6 +364,7 @@ int main() {
             if (now - last_save_time >= 100) {
                 Settings &localSettings = storage.GetSettings();
                 localSettings.is_overdrive_enabled = enable_overdrive;
+                localSettings.is_filter_modulation_enabled = filterModulationEnabled;
 
                 // Save settings to SD card
                 auto save_result = storage.Save();

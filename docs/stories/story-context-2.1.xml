@@ -1,0 +1,88 @@
+<story-context id="epic-2-story-1" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>1</storyId>
+    <title>Decouple Toggle Switch from Calculation Order</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-20</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>/docs/stories/story-2.1.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>firmware developer</asA>
+    <iWant>to remove the toggle switch's control over calculation order</iWant>
+    <soThat>it can be repurposed for controlling the filter randomization/AM LFO effect</soThat>
+    <tasks>
+      - Analyze current toggle switch implementation
+      - Fix calculation order to optimal default
+      - Refactor toggle switch handler
+      - Verify audio quality
+      - Verify overdrive button independence
+      - Add debug output and verification
+      - Testing and validation
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. Toggle switch (B8) button handler disconnected from calculation order logic
+    2. Calculation order fixed to optimal default setting
+    3. No regression in audio processing quality
+    4. Existing overdrive functionality (B7) remains unchanged
+    5. Code refactored to remove or bypass calculation order toggle infrastructure
+    6. Serial debug confirms switch no longer affects calculation order
+    7. Audio output verified to remain consistent regardless of switch position
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      - /docs/bmm-epics.md#Story-2.1
+      - /docs/prd/epic-2.md#Control-Remapping
+      - /docs/bmm-PRD.md#Epic-2-Objectives
+      - /docs/architecture.md
+    </docs>
+    <code>
+      - main.cpp:99 - Toggle switch debounce and reading
+      - main.cpp:102 - Toggle state variable
+      - main.cpp:20 - Toggle switch declaration
+      - Look for calculation order variables/logic
+    </code>
+    <dependencies>
+      - DaisyPatchSM hardware abstraction
+      - Epic 1 state persistence completed
+      - Button/switch handling infrastructure
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Must not affect existing overdrive functionality
+    - Must maintain audio quality
+    - Must preserve state persistence from Epic 1
+    - Must not introduce audio glitches
+  </constraints>
+
+  <interfaces>
+    - Toggle switch hardware (B8)
+    - Audio callback processing chain
+    - MIDI debug output
+    - Settings struct for persistence
+  </interfaces>
+
+  <tests>
+    <standards>
+      - Manual testing required for audio quality
+      - Test with oscilloscope or audio analyzer
+      - Power cycle testing for state persistence
+    </standards>
+    <locations>
+      - AudioCallback function for processing tests
+      - Button handler for switch behavior tests
+    </locations>
+    <ideas>
+      - Test all button combinations
+      - Rapid toggle testing
+      - Audio quality comparison before/after
+      - Verify no calculation order changes with toggle
+    </ideas>
+  </tests>
+</story-context>

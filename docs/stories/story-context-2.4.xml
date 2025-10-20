@@ -1,0 +1,102 @@
+<story-context id="epic-2-story-4" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>4</storyId>
+    <title>Maintain Overdrive Button Functionality</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-20</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>/docs/stories/story-2.4.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>button B7 to continue controlling overdrive on/off independently</iWant>
+    <soThat>I can still enable/disable overdrive regardless of filter randomization state</soThat>
+    <tasks>
+      - Verify B7 button isolation
+      - Test effect independence
+      - Validate knob behavior with overdrive
+      - Verify LED indicators
+      - Validate state persistence
+      - Audio path validation
+      - Integration testing
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. Button B7 continues to toggle overdrive effect on/off
+    2. Overdrive state independent of filter randomization state
+    3. Both effects can be active simultaneously without conflicts
+    4. Overdrive gain still affected by knob position (when available)
+    5. LED indicators correctly show both states (if applicable)
+    6. State persistence includes both overdrive and randomization settings
+    7. Clean signal path when both effects are enabled
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      - /docs/bmm-epics.md#Story-2.4
+      - /docs/prd/epic-2.md#Control-Remapping
+      - /docs/stories/story-1.4.md - LED state management
+      - /docs/stories/story-2.1.md - Initial decoupling
+      - /docs/stories/story-2.2.md - Modulation implementation
+      - /docs/stories/story-2.3.md - Dual-purpose knob
+    </docs>
+    <code>
+      - main.cpp:19 - Button (B7) declaration
+      - main.cpp:34 - enable_overdrive flag
+      - main.cpp:98 - Button debounce
+      - main.cpp:149-157 - Button press handler
+      - main.cpp:51 - is_overdrive_enabled in Settings
+      - main.cpp:76-83 - LED control functions
+      - main.cpp:24-25 - Overdrive effect objects
+    </code>
+    <dependencies>
+      - Stories 2.1-2.3 completion
+      - Epic 1 state persistence
+      - Overdrive effect implementation
+      - LED control infrastructure
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Must not break existing functionality
+    - Effects must be independent
+    - State must persist correctly
+    - Performance must be maintained
+  </constraints>
+
+  <interfaces>
+    - Button hardware (B7)
+    - Toggle switch hardware (B8)
+    - Overdrive effect processing
+    - Modulation effect processing
+    - LED indicators
+    - Settings persistence
+  </interfaces>
+
+  <tests>
+    <standards>
+      - Systematic testing of all 4 state combinations
+      - Audio quality assessment
+      - CPU profiling with both effects
+      - Latency measurements
+    </standards>
+    <locations>
+      - Button handler for B7
+      - Toggle handler for B8
+      - Audio callback for effects
+      - Settings save/load
+    </locations>
+    <ideas>
+      - Test all effect combinations
+      - Rapid button pressing
+      - Power cycle testing
+      - CPU usage monitoring
+      - Audio path verification
+      - Edge case testing
+      - Regression testing of Epic 1
+    </ideas>
+  </tests>
+</story-context>

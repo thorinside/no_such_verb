@@ -1,0 +1,95 @@
+<story-context id="epic-2-story-5" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>5</storyId>
+    <title>Update User Documentation</title>
+    <status>Ready</status>
+    <generatedAt>2025-10-20</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>/docs/stories/story-2.5.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>future user of No Such Verb</asA>
+    <iWant>clear documentation of the new control scheme</iWant>
+    <soThat>I understand how to use the filter randomization/AM LFO and overdrive features</soThat>
+    <tasks>
+      - Update README.md control mapping
+      - Create user guide section
+      - Document patch examples
+      - Create troubleshooting section
+      - Update version history
+      - Review and update technical docs
+      - Final review and formatting
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. README.md updated with new control mapping
+    2. User guide section explains control interactions
+    3. Patch examples documented showing common use cases
+    4. Troubleshooting section for new features
+    5. Version history updated with Epic 2 changes
+    6. Any MIDI documentation updated if applicable
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      - /docs/bmm-epics.md#Story-2.5
+      - /docs/prd/epic-2.md#Documentation
+      - /docs/stories/story-1.6.md - Documentation patterns
+      - All Epic 2 story files
+      - /README.md
+      - /docs/development-guide.md
+      - /docs/architecture.md
+      - /CHANGELOG.md (if exists)
+    </docs>
+    <code>
+      - All code changes from Stories 2.1-2.4
+      - Control mappings from main.cpp
+      - Effect parameters and ranges
+      - MIDI implementation details
+    </code>
+    <dependencies>
+      - Stories 2.1-2.4 completion
+      - All implementation complete
+      - Testing results available
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Must be clear and user-friendly
+    - Technical accuracy required
+    - Consistent terminology
+    - No jargon in user sections
+  </constraints>
+
+  <interfaces>
+    - User-facing documentation
+    - Developer documentation
+    - Version control system
+    - Markdown formatting
+  </interfaces>
+
+  <tests>
+    <standards>
+      - Have someone unfamiliar review
+      - Test all instructions step-by-step
+      - Verify examples work
+      - Check for ambiguous language
+    </standards>
+    <locations>
+      - README.md
+      - User guide sections
+      - Technical documentation
+      - Version history
+    </locations>
+    <ideas>
+      - Clarity review by non-developer
+      - Step-by-step instruction testing
+      - Example verification
+      - Cross-reference checking
+      - Formatting validation
+    </ideas>
+  </tests>
+</story-context>
