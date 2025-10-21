@@ -1,6 +1,5 @@
 #include "daisy_patch_sm.h"
 #include "daisysp.h"
-#include "lib/daisy_midi.h"
 #include "sd_settings.h"
 #include <random>
 
@@ -15,7 +14,6 @@ using namespace daisysp;
 #define SETTINGS_VERSION 1
 
 DaisyPatchSM hw;
-DaisyMidi midi;
 Switch button;
 Switch toggle;
 
@@ -100,7 +98,7 @@ static void BlinkLedFeedback(int flashes, uint32_t on_ms, uint32_t off_ms) {
 void AudioCallback(const AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out,
                    const size_t size) {
     button.Debounce();
-    toggle.Debounce();
+    // Note: toggle is a latching switch, read raw state instead of debouncing
     hw.ProcessAllControls();
 
     float cv_values[8] = {
@@ -143,14 +141,20 @@ void AudioCallback(const AudioHandle::InputBuffer in, AudioHandle::OutputBuffer 
             }
         }
     }
+    // Read latching toggle switch state directly (not using Debounce for latching switches)
+    static bool last_toggle_state = false;
+    bool current_toggle_state = toggle.RawState();  // Read raw GPIO state for latching toggle
+
     if (startup) {
-        midi.sysex_printf_buffer("Calculation order: POST-reverb (fixed)\n");
-        midi.sysex_send_buffer();
         startup = false;
     }
 
+    // Track toggle state changes
+    if (current_toggle_state != last_toggle_state) {
+        last_toggle_state = current_toggle_state;
+    }
+
     if (button.Pressed() && !button_pressed) {
-        midi.sysex_printf_buffer("Button Pressed\n");
         button_pressed = true;
 
         if (enable_overdrive == false) {
@@ -166,16 +170,11 @@ void AudioCallback(const AudioHandle::InputBuffer in, AudioHandle::OutputBuffer 
         button_pressed = false;
     }
 
-    // Toggle switch (B8) handler for filter modulation enable/disable
-    if (toggle.Pressed() && !toggle_pressed) {
-        midi.sysex_printf_buffer("Toggle Pressed - Filter Modulation: %s\n",
-                                filterModulationEnabled ? "OFF" : "ON");
-        toggle_pressed = true;
-
-        filterModulationEnabled = !filterModulationEnabled;
+    // Toggle switch (B8) - read state directly for latching toggle
+    // State change tracking handled above with RawState()
+    if (current_toggle_state != filterModulationEnabled) {
+        filterModulationEnabled = current_toggle_state;
         save_settings = true;
-    } else if (!toggle.Pressed()) {
-        toggle_pressed = false;
     }
 
     // LED state: ON when overdrive OR filter modulation enabled, OFF when both disabled
@@ -247,8 +246,6 @@ void AudioCallback(const AudioHandle::InputBuffer in, AudioHandle::OutputBuffer 
         out[0][i] = audio_out_l[i];
         out[1][i] = audio_out_r[i];
     }
-
-    midi.sysex_send_buffer();
 }
 
 // ============================================================================
@@ -339,7 +336,6 @@ int main() {
     jitter.SetCpsMin(1);
     jitter.SetCpsMax(25);
     reverb.Init(hw.AudioSampleRate());
-    midi.Init();
 
     hp_filter_l.Init(hw.AudioSampleRate());
     hp_filter_r.Init(hw.AudioSampleRate());

@@ -6,6 +6,7 @@
 #include <cstdlib>
 
 using namespace daisy;
+using namespace daisy::patch_sm;
 
 /**
  * SD Card-based settings storage for BOOT_QSPI mode
